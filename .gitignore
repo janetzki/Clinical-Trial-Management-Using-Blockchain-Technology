@@ -1,0 +1,5 @@
+# Libraries
+node_modules/
+
+# Project files
+.idea/
