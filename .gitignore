@@ -3,3 +3,9 @@ node_modules/
 
 # Project files
 .idea/
+
+# Tutorials
+*tutorial/
+
+# Output
+build/
