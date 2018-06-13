@@ -3,7 +3,6 @@ App = {
     contracts: {},
 
     init: function () {
-        console.log('init');
         return App.initWeb3();
     },
 
@@ -19,7 +18,6 @@ App = {
     },
 
     initContract: function () {
-        console.log('init contract');
         $.getJSON('MedicalRecordSystem.json', function (data) {
             App.contracts.MedicalRecordSystem = TruffleContract(data);
             App.contracts.MedicalRecordSystem.setProvider(App.web3Provider);
@@ -29,7 +27,6 @@ App = {
     },
 
     bindEvents: function () {
-        console.log('bind');
         $(document).on('click', '.btn-upload', App.handleUpload);
     },
 
@@ -44,10 +41,9 @@ App = {
     },
 
     handleUpload: function (event) {
-        console.log('upload');
         event.preventDefault();
 
-        const fileName = $(event.target).data('fileName');
+        const fileName = $(event.target).data('file-name');
 
         web3.eth.getAccounts(function (error, accounts) {
             if (error) {
@@ -68,10 +64,8 @@ App = {
 
 };
 
-console.log('init1');
 $(function () {
     $(window).load(function () {
-        console.log('init2');
         App.init();
     });
 });

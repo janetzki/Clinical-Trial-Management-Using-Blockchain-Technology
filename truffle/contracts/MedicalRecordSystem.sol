@@ -3,10 +3,6 @@ pragma solidity ^0.4.22;
 contract MedicalRecordSystem {
     mapping(address => string) public records;
 
-    constructor() public {
-
-    }
-
     function upload(string recordName) public returns (bool) {
         address patient = msg.sender;
         records[patient] = recordName;
