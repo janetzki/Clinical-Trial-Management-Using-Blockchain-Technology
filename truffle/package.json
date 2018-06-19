@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "bootstrap": "^4.1.1",
+    "cryptojs": "^2.5.3",
     "truffle-contract": "^3.0.5"
   }
 }

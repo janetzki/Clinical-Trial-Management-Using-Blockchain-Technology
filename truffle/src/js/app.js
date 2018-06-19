@@ -31,32 +31,24 @@ App = {
         $(document).on('click', '.btn-update', App.handleUpdate);
     },
 
-    markUploaded: function () {
-        App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
-            // TODO
-        }).then(function () {
-            // TODO
-        }).catch(function (err) {
-            console.log(err.message);
-        });
-    },
-
     handleUpload: function (event) {
         event.preventDefault();
 
-        const fileName = $(event.target).data('file-name');
+        const fileHash = $('#file-upload').attr('data-hash');
+        if (fileHash === undefined || fileHash === '') {
+            console.error('No file selected');
+            return;
+        }
 
         web3.eth.getAccounts(function (error, accounts) {
             if (error) {
                 console.log(error);
             }
 
-            const account = accounts[0];
+            const account = accounts[0]; // Usually, there is only one account.
 
             App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
-                return medicalRecordSystemInstance.upload(fileName, {from: account});
-            }).then(function (result) {
-                return App.markUploaded();
+                return medicalRecordSystemInstance.upload(fileHash, {from: account});
             }).catch(function (err) {
                 console.log(err.message);
             });
@@ -66,21 +58,19 @@ App = {
     handleUpdate: function (event) {
         event.preventDefault();
 
-        web3.eth.getAccounts(function (error, accounts) {
-            if (error) {
-                console.log(error);
-            }
-
-            const account = accounts[0];
-
-            App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
-                return medicalRecordSystemInstance.getRecords({from: account});
-            }).then(function (result) {
-                $('#records').text(result);
-                console.log(result);
-            }).catch(function (err) {
-                console.log(err.message);
-            });
+        App.contracts.MedicalRecordSystem.deployed().then(function (instance) {
+            return instance.getNumberOfRecords.call().then(function (numberOfRecords) {
+                numberOfRecords = numberOfRecords.toNumber();
+                const promises = [];
+                for (let i = 0; i < numberOfRecords; i++) {
+                    promises.push(instance.getRecordByIndex.call(i));
+                }
+                Promise.all(promises).then(function (hashes) {
+                    $('#records').text(hashes.toString().replace(/,/g, '\n', ));
+                });
+            })
+        }).catch(function (err) {
+            console.log(err.message);
         });
     },
 };

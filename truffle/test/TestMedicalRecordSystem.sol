@@ -9,15 +9,21 @@ contract TestMedicalRecordSystem {
 
     // Test if a patient can upload a file
     function testUploadFile() public {
-        string memory fileName = "medical record #1";
-        bool success = recordSystem.upload(fileName);
+        string memory hash = "12345";
+        bool success = recordSystem.upload(hash);
         Assert.equal(success, true, "A patient should be able to upload a file.");
+    }
+
+    // Test if the number of records is correct
+    function testNumberOfRecords() public {
+        uint numberOfRecords = recordSystem.getNumberOfRecords();
+        Assert.equal(numberOfRecords, 1, "The number of records should be 1.");
     }
 
     // Test if a patient can download their records
     function testDownloadFile() public {
-        string memory fileName = "medical record #1";
-        string memory records = recordSystem.getRecords();
-        Assert.equal(records, fileName, "A patient should be able to download their records.");
+        string memory hash = "12345";
+        string memory record = recordSystem.getRecordByIndex(0);
+        Assert.equal(record, hash, "A patient should be able to download their records.");
     }
 }
