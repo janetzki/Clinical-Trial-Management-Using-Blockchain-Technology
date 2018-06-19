@@ -1,0 +1,22 @@
+{
+  "name": "clinical-trial-management",
+  "version": "0.0.1",
+  "description": "Clinical Trial Management Using Blockchain Technology",
+  "main": "truffle.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "dev": "lite-server",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jonathan Janetzki",
+  "devDependencies": {
+    "lite-server": "^2.3.0"
+  },
+  "dependencies": {
+    "bootstrap": "^4.1.1",
+    "cryptojs": "^2.5.3",
+    "truffle-contract": "^3.0.5"
+  }
+}
