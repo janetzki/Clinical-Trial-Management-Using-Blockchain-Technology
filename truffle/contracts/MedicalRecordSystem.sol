@@ -8,4 +8,9 @@ contract MedicalRecordSystem {
         records[patient] = recordName;
         return true;
     }
+
+    function getRecords() public view returns (string) {
+        address patient = msg.sender;
+        return records[patient];
+    }
 }

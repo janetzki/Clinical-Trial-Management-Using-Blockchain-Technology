@@ -28,6 +28,7 @@ App = {
 
     bindEvents: function () {
         $(document).on('click', '.btn-upload', App.handleUpload);
+        $(document).on('click', '.btn-update', App.handleUpdate);
     },
 
     markUploaded: function () {
@@ -60,8 +61,28 @@ App = {
                 console.log(err.message);
             });
         });
-    }
+    },
 
+    handleUpdate: function (event) {
+        event.preventDefault();
+
+        web3.eth.getAccounts(function (error, accounts) {
+            if (error) {
+                console.log(error);
+            }
+
+            const account = accounts[0];
+
+            App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
+                return medicalRecordSystemInstance.getRecords({from: account});
+            }).then(function (result) {
+                $('#records').text(result);
+                console.log(result);
+            }).catch(function (err) {
+                console.log(err.message);
+            });
+        });
+    },
 };
 
 $(function () {
