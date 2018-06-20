@@ -7,7 +7,8 @@
 
     <title>Medical Record System</title>
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
     <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
@@ -23,10 +24,11 @@
         </div>
     </div>
 
-    <input id="file-upload" type="file" data-hash onchange="hashFile(this)">
+    <input id="file-upload" type="file">
     <button class="btn btn-default btn-upload" type="button">Upload medical record</button>
     <button class="btn btn-default btn-update" type="button">Update records</button>
-    <p id="records">[no records for this patient]</p>
+    <ol id="records">
+    </ol>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/core-min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/hmac-sha512.js"></script>
@@ -34,23 +36,7 @@
 <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
 <script src="../node_modules/web3/dist/web3.min.js"></script>
 <script src="../node_modules/truffle-contract/dist/truffle-contract.js"></script>
-<script src="js/app.js"></script>
-<script>
-    function hashFile(fileUploader) {
-        if (fileUploader.files && fileUploader.files[0]) {
-            const file = fileUploader.files[0];
-            const reader = new FileReader();
-
-            reader.onload = function (file) {
-                const binary = file.target.result;
-                const hash = CryptoJS.SHA512(binary).toString();
-                fileUploader.setAttribute('data-hash', hash);
-            };
-
-            reader.readAsBinaryString(file);
-        }
-    }
-</script>
-
+<script src="../node_modules/ipfs-api/dist/index.min.js"></script>
+<script src="js/app-browser.js"></script>
 </body>
 </html>

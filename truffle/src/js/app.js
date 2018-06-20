@@ -1,3 +1,5 @@
+const ipfs = new IpfsApi('localhost', '5001', {protocol: 'http'});
+
 App = {
     web3Provider: null,
     contracts: {},
@@ -34,25 +36,36 @@ App = {
     handleUpload: function (event) {
         event.preventDefault();
 
-        const fileHash = $('#file-upload').attr('data-hash');
-        if (fileHash === undefined || fileHash === '') {
+        const fileUploader = $('#file-upload')[0];
+        if (!fileUploader.files || !fileUploader.files[0]) {
             console.error('No file selected');
             return;
         }
+        const file = fileUploader.files[0];
+        const reader = new FileReader();
 
-        web3.eth.getAccounts(function (error, accounts) {
-            if (error) {
-                console.log(error);
-            }
+        reader.readAsArrayBuffer(file);
+        reader.onload = function (reader) {
+            const buffer = Buffer.from(reader.target.result);
+            ipfs.add(buffer, (err, ipfsHash) => {
+                console.log(err, ipfsHash);
+                const fileHash = ipfsHash[0].hash;
 
-            const account = accounts[0]; // Usually, there is only one account.
+                web3.eth.getAccounts(function (error, accounts) {
+                    if (error) {
+                        console.log(error);
+                    }
 
-            App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
-                return medicalRecordSystemInstance.upload(fileHash, {from: account});
-            }).catch(function (err) {
-                console.log(err.message);
+                    const account = accounts[0]; // Usually, there is only one account.
+
+                    App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
+                        return medicalRecordSystemInstance.upload(fileHash, {from: account});
+                    }).catch(function (err) {
+                        console.log(err.message);
+                    });
+                });
             });
-        });
+        };
     },
 
     handleUpdate: function (event) {
@@ -66,7 +79,19 @@ App = {
                     promises.push(instance.getRecordByIndex.call(i));
                 }
                 Promise.all(promises).then(function (hashes) {
-                    $('#records').text(hashes.toString().replace(/,/g, '\n', ));
+                    const list = document.getElementById('records');
+                    list.innerHTML = '';
+                    for (const hash of hashes) {
+                        const link = document.createElement('a');
+                        link.appendChild(document.createTextNode(hash));
+                        link.title = hash;
+                        link.href = 'http://localhost:8080/ipfs/' + hash;
+
+                        const listItem = document.createElement('li');
+                        // listItem.appendChild(document.createTextNode(hash));
+                        listItem.appendChild(link);
+                        list.appendChild(listItem);
+                    }
                 });
             })
         }).catch(function (err) {
