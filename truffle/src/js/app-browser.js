@@ -2061,9 +2061,15 @@ App = {
                     const list = document.getElementById('records');
                     list.innerHTML = '';
                     for (const hash of hashes) {
-                        const entry = document.createElement('li');
-                        entry.appendChild(document.createTextNode(hash));
-                        list.appendChild(entry);
+                        const link = document.createElement('a');
+                        link.appendChild(document.createTextNode(hash));
+                        link.title = hash;
+                        link.href = 'http://localhost:8080/ipfs/' + hash;
+
+                        const listItem = document.createElement('li');
+                        // listItem.appendChild(document.createTextNode(hash));
+                        listItem.appendChild(link);
+                        list.appendChild(listItem);
                     }
                 });
             })
