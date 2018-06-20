@@ -23,10 +23,11 @@
         </div>
     </div>
 
-    <input id="file-upload" type="file" data-hash onchange="hashFile(this)">
+    <input id="file-upload" type="file">
     <button class="btn btn-default btn-upload" type="button">Upload medical record</button>
     <button class="btn btn-default btn-update" type="button">Update records</button>
-    <p id="records">[no records for this patient]</p>
+    <ol id="records">
+    </ol>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/core-min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/hmac-sha512.js"></script>
@@ -34,23 +35,23 @@
 <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
 <script src="../node_modules/web3/dist/web3.min.js"></script>
 <script src="../node_modules/truffle-contract/dist/truffle-contract.js"></script>
+<script src="../node_modules/ipfs-api/dist/index.min.js"></script>
 <script src="js/app-browser.js"></script>
-<script>
-    function hashFile(fileUploader) {
-        if (fileUploader.files && fileUploader.files[0]) {
-            const file = fileUploader.files[0];
-            const reader = new FileReader();
+<!--<script>-->
+    <!--function hashFile(fileUploader) {-->
+        <!--if (fileUploader.files && fileUploader.files[0]) {-->
+            <!--const file = fileUploader.files[0];-->
+            <!--const reader = new FileReader();-->
 
-            reader.onload = function (file) {
-                const binary = file.target.result;
-                const hash = CryptoJS.SHA512(binary).toString();
-                fileUploader.setAttribute('data-hash', hash);
-            };
+            <!--reader.onload = function (file) {-->
+                <!--const binary = file.target.result;-->
+                <!--const hash = CryptoJS.SHA512(binary).toString();-->
+                <!--fileUploader.setAttribute('data-hash', hash);-->
+            <!--};-->
 
-            reader.readAsBinaryString(file);
-        }
-    }
-</script>
-
+            <!--reader.readAsBinaryString(file);-->
+        <!--}-->
+    <!--}-->
+<!--</script>-->
 </body>
 </html>
