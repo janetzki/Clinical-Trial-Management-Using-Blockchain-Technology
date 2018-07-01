@@ -5,6 +5,7 @@ App = {
     contracts: {},
     privateKey: null,
     publicKey: null,
+    files: [],
 
     init: function () {
         return App.initWeb3();
@@ -34,13 +35,72 @@ App = {
         $(document).on('click', '.btn-upload', App.handleUpload);
         $(document).on('click', '.btn-update', App.handleUpdate);
         $(document).on('click', '.btn-generate-keys', App.generateKeys);
+        $(document).on('click', '.btn-grant-access', App.grantAccess);
     },
 
-    setKeys: function(keys) {
-        App.privateKey = keys['private'];
-        App.publicKey = keys['public'];
-        $('#privateKey').text('Private: ' + App.privateKey);
-        $('#publicKey').text('Public: ' + App.publicKey);
+    grantAccess: function (event) {
+        event.preventDefault();
+
+        const account = $('#recipient-address').val();
+        if (account === '') {
+            alert('Enter a valid address');
+            return;
+        }
+
+        App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
+            return medicalRecordSystemInstance.getPublicKey.call(account);
+        }).then(function (publicKey) {
+            if (publicKey === '') {
+                alert('This user does not have a public key yet.');
+                return;
+            }
+            for (encryptedFile of App.files) {
+                const fileJson = JSON.parse(encryptedFile);
+                const data = {
+                    private_key: App.privateKey,
+                    public_key: publicKey,
+                    capsule: fileJson.capsule
+                };
+                $.ajax({
+                    type: 'POST',
+                    dataType: 'json',
+                    url: 'http://localhost:8000/grant_acess',
+                    data: data,
+                    success: function (data, textStatus, jqXHR1) {
+                        App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
+                            return medicalRecordSystemInstance.addReKey(account, data.capsule);
+                        });
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.error(textStatus);
+                        console.error(jqXHR.responseJSON);
+                        console.error(errorThrown);
+                    }
+                });
+            }
+        }).catch(function (err) {
+            console.error(err.message);
+        });
+    },
+
+    setKeys: function (keys) {
+        web3.eth.getAccounts(function (error, accounts) {
+            if (error) {
+                console.error(error);
+            }
+            const account = accounts[0];
+
+            App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
+                return medicalRecordSystemInstance.setPublicKey(keys['public'], {from: account});
+            }).then(function (result) {
+                App.privateKey = keys['private'];
+                App.publicKey = keys['public'];
+                $('#privateKey').text('Private: ' + App.privateKey);
+                $('#publicKey').text('Public: ' + App.publicKey);
+            }).catch(function (err) {
+                console.error(err.message);
+            });
+        });
     },
 
     generateKeys: function () {
@@ -89,7 +149,6 @@ App = {
             dataType: 'json',
             url: 'http://localhost:8000/encrypt',
             data: data,
-            //contentType: 'application/json',
             success: function (data, textStatus, jqXHR1) {
                 App.uploadFileToIpfs(JSON.stringify(data));
             },
@@ -106,7 +165,7 @@ App = {
 
         const fileUploader = $('#file-upload')[0];
         if (!fileUploader.files || !fileUploader.files[0]) {
-            console.error('No file selected');
+            alert('No file selected');
             return;
         }
         const file = fileUploader.files[0];
@@ -131,24 +190,38 @@ App = {
     },
 
     decrypt: function (event) {
+        const fileJson = JSON.parse(event.target.getAttribute('encryptedFile'));
         const data = {
-            file: event.target.getAttribute('encryptedFile'),
-            public_key: App.publicKey,
-            private_key: App.privateKey
+            file: fileJson.file,
+            capsule: fileJson.capsule,
+            private_key: App.privateKey,
+            public_key: App.publicKey
         };
-        $.ajax({
-            type: 'POST',
-            dataType: 'json',
-            url: 'http://localhost:8000/decrypt',
-            data: data,
-            success: function (data, textStatus, jqXHR1) {
-                alert(data['file'])
-            },
-            error: function (jqXHR, textStatus, errorThrown) {
-                console.error(textStatus);
-                console.error(jqXHR.responseJSON);
-                console.error(errorThrown);
+
+        App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
+            return medicalRecordSystemInstance.getReKey.call();
+        }).then(function (reKey) {
+
+            if (reKey !== '') {
+                // medical professional
+                data.capsule = reKey;
             }
+            $.ajax({
+                type: 'POST',
+                dataType: 'json',
+                url: 'http://localhost:8000/decrypt',
+                data: data,
+                success: function (data, textStatus, jqXHR1) {
+                    alert(data['file'])
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.error(textStatus);
+                    console.error(jqXHR.responseJSON);
+                    console.error(errorThrown);
+                }
+            });
+        }).catch(function (err) {
+            console.error(err.message);
         });
     },
 
@@ -161,8 +234,7 @@ App = {
         const button = document.createElement('button');
         const idClass = 'btn-decrypt' + fileName;
         button.textContent = 'Decrypt';
-        const classList = 'btn btn-default decrypt-button btn-decrypt ' + idClass;
-        button.classList = classList;
+        button.classList = 'btn btn-default decrypt-button btn-decrypt ' + idClass;
         button.type = 'button';
         button.setAttribute('encryptedFile', encryptedFile);
         $(document).on('click', '.' + idClass, App.decrypt);
@@ -171,6 +243,8 @@ App = {
         listItem.appendChild(button);
         listItem.appendChild(link);
         list.appendChild(listItem);
+
+        App.files.push(encryptedFile);
     },
 
     handleUpdate: function (event) {
@@ -189,7 +263,8 @@ App = {
                     for (const i in hashes) {
                         const hash = hashes[i];
                         const url = 'http://localhost:8080/ipfs/' + hash;
-                        App.getFile(url, App.showFileLink, 'Record_' + i, list);
+                        App.files = [];
+                        App.getFile(url, App.showFileLink, 'Record_' + hash, list);
                     }
                 });
             })

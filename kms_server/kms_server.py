@@ -1,8 +1,9 @@
 import json
 import urllib
 from umbral import (
+    keys,
     pre,
-    keys
+    signing
 )
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from cgi import parse_header, parse_multipart
@@ -46,10 +47,13 @@ class KmsHandler(BaseHTTPRequestHandler):
         #data_string = self.rfile.read(int(self.headers['Content-Length']))
         #postvars = json.loads(data_string)
         self._set_headers()
+
+        # For an explanation, visit https://github.com/nucypher/pyUmbral
         if self.path == '/encrypt' or self.path == '/decrypt':
             file = postvars[b'file'][0]
             public_key = b64decode(postvars[b'public_key'][0])
             public_key = keys.UmbralPublicKey.from_bytes(public_key)
+
             if self.path == '/encrypt':
                 encrypted_file, capsule = pre.encrypt(public_key, file)
                 json_string = json.dumps({
@@ -59,14 +63,35 @@ class KmsHandler(BaseHTTPRequestHandler):
             else:
                 private_key = b64decode(postvars[b'private_key'][0])
                 private_key = keys.UmbralPrivateKey.from_bytes(private_key)
-                data = json.loads(file.decode('utf-8'))
-                file = b64decode(data['file'])
-                capsule = b64decode(data['capsule'])
+                file = b64decode(postvars[b'file'][0])
+                capsule = b64decode(postvars[b'capsule'][0])
                 capsule = pre.Capsule.from_bytes(capsule, public_key.params)
                 decrypted_file = pre.decrypt(file, capsule, private_key)
                 json_string = json.dumps({
                     'file': decrypted_file.decode('utf8')
                 }).encode('ascii')
+            self.wfile.write(json_string)
+
+        elif self.path == '/grant_acess':
+            bobs_public_key = b64decode(postvars[b'public_key'][0])
+            bobs_public_key = keys.UmbralPublicKey.from_bytes(bobs_public_key)
+            alices_private_key = b64decode(postvars[b'private_key'][0])
+            alices_private_key = keys.UmbralPrivateKey.from_bytes(alices_private_key)
+            capsule = postvars[b'capsule'][0]
+            capsule = b64decode(capsule)
+            capsule = pre.Capsule.from_bytes(capsule, alices_private_key.get_pubkey().params)
+            capsule.set_correctness_keys(delegating=alices_private_key.get_pubkey(),
+                                         receiving=bobs_public_key,
+                                         verifying=alices_private_key.get_pubkey(),
+                                         )
+            signer = signing.Signer(alices_private_key)
+            kfrags = pre.split_rekey(alices_private_key, signer, bobs_public_key, 10, 20)
+            for kfrag in kfrags:
+                cfrag = pre.reencrypt(kfrag, capsule)
+                capsule.attach_cfrag(cfrag)
+            json_string = json.dumps({
+                'capsule': b64encode(capsule.to_bytes()).decode('utf8')
+            }).encode('ascii')
             self.wfile.write(json_string)
 
 
