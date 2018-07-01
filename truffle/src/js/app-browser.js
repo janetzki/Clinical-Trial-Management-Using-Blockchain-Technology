@@ -36,16 +36,13 @@ App = {
     },
 
     uploadFileToIpfs: function(encryptedFile) {
-        console.log(encryptedFile);
         const buffer = Buffer.from(encryptedFile);
-        console.log(buffer);
         ipfs.add(buffer, (err, ipfsHash) => {
-            console.log(err, ipfsHash);
             const fileHash = ipfsHash[0].hash;
 
             web3.eth.getAccounts(function (error, accounts) {
                 if (error) {
-                    console.log(error);
+                    console.error(error);
                 }
 
                 const account = accounts[0]; // Usually, there is only one account.
@@ -53,19 +50,17 @@ App = {
                 App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
                     return medicalRecordSystemInstance.upload(fileHash, {from: account});
                 }).catch(function (err) {
-                    console.log(err.message);
+                    console.error(err.message);
                 });
             });
         });
     },
 
     encryptFile: function(file) {
-        console.log(file);
         const data = {
             file: file,
             public_key: 'A2Giv7jezW52yaAtc1ZHAHBftQaf8kb21+qcgKV+QJX+'
         };
-        console.log(data);
         $.ajax({
             type: 'POST',
             dataType: 'json',
@@ -73,17 +68,14 @@ App = {
             data: data,
             //contentType: 'application/json',
             success: function (data, textStatus, jqXHR1) {
-                console.log('c');
                 App.uploadFileToIpfs(JSON.stringify(data));
             },
             error: function (jqXHR, textStatus, errorThrown) {
-                console.log('d');
                 console.error(textStatus);
                 console.error(jqXHR.responseJSON);
                 console.error(errorThrown);
             }
         });
-        console.log('b');
     },
 
     handleUpload: function (event) {
@@ -104,6 +96,35 @@ App = {
         };
     },
 
+    getFile: function (url, callback, fileName, list) {
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() {
+            if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+                callback(url, xmlHttp.responseText, fileName, list);
+            }
+        };
+        xmlHttp.open('GET', url, true);
+        xmlHttp.send(null);
+    },
+
+    showFileLink: function(url, encryptedFile, fileName, list) {
+        const link = document.createElement('a');
+        link.appendChild(document.createTextNode(fileName));
+        link.title = fileName;
+        link.href = url;
+
+        const button = document.createElement('button');
+        button.textContent = 'Decrypt';
+        button.classList = 'btn btn-default btn-upload decrypt-button';
+        button.type = 'button';
+        button.setAttribute('encryptedFile', encryptedFile);
+
+        const listItem = document.createElement('li');
+        listItem.appendChild(button);
+        listItem.appendChild(link);
+        list.appendChild(listItem);
+    },
+
     handleUpdate: function (event) {
         event.preventDefault();
 
@@ -117,21 +138,15 @@ App = {
                 Promise.all(promises).then(function (hashes) {
                     const list = document.getElementById('records');
                     list.innerHTML = '';
-                    for (const hash of hashes) {
-                        const link = document.createElement('a');
-                        link.appendChild(document.createTextNode(hash));
-                        link.title = hash;
-                        link.href = 'http://localhost:8080/ipfs/' + hash;
-
-                        const listItem = document.createElement('li');
-                        // listItem.appendChild(document.createTextNode(hash));
-                        listItem.appendChild(link);
-                        list.appendChild(listItem);
+                    for (const i in hashes) {
+                        const hash = hashes[i];
+                        const url = 'http://localhost:8080/ipfs/' + hash;
+                        App.getFile(url, App.showFileLink, 'Record #' + (i + 1), list);
                     }
                 });
             })
         }).catch(function (err) {
-            console.log(err.message);
+            console.error(err.message);
         });
     },
 };
