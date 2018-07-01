@@ -59,7 +59,7 @@ App = {
     encryptFile: function(file) {
         const data = {
             file: file,
-            public_key: 'A2Giv7jezW52yaAtc1ZHAHBftQaf8kb21+qcgKV+QJX+'
+            public_key: "A+UPzODJwkAORU3LQLFp/p4Q6earf+oi5aQW52sFFIms"
         };
         $.ajax({
             type: 'POST',
@@ -107,6 +107,28 @@ App = {
         xmlHttp.send(null);
     },
 
+    decrypt: function (event) {
+        const data = {
+            file: event.target.getAttribute('encryptedFile'),
+            public_key: "A+UPzODJwkAORU3LQLFp/p4Q6earf+oi5aQW52sFFIms",
+            private_key: "ctP64jAPE1bsgR8wSW5UHHHC+vB2EvwTv2SKsb6JixU=",
+        };
+        $.ajax({
+            type: 'POST',
+            dataType: 'json',
+            url: 'http://localhost:8000/decrypt',
+            data: data,
+            success: function (data, textStatus, jqXHR1) {
+                alert(data['file'])
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.error(textStatus);
+                console.error(jqXHR.responseJSON);
+                console.error(errorThrown);
+            }
+        });
+    },
+
     showFileLink: function(url, encryptedFile, fileName, list) {
         const link = document.createElement('a');
         link.appendChild(document.createTextNode(fileName));
@@ -114,10 +136,13 @@ App = {
         link.href = url;
 
         const button = document.createElement('button');
+        const idClass = 'btn-decrypt' + fileName;
         button.textContent = 'Decrypt';
-        button.classList = 'btn btn-default btn-upload decrypt-button';
+        const classList = 'btn btn-default decrypt-button btn-decrypt ' + idClass;
+        button.classList = classList;
         button.type = 'button';
         button.setAttribute('encryptedFile', encryptedFile);
+        $(document).on('click', '.' + idClass, App.decrypt);
 
         const listItem = document.createElement('li');
         listItem.appendChild(button);
@@ -141,7 +166,7 @@ App = {
                     for (const i in hashes) {
                         const hash = hashes[i];
                         const url = 'http://localhost:8080/ipfs/' + hash;
-                        App.getFile(url, App.showFileLink, 'Record #' + (i + 1), list);
+                        App.getFile(url, App.showFileLink, 'Record_' + i, list);
                     }
                 });
             })
