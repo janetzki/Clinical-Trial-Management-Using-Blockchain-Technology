@@ -5,6 +5,8 @@ const ipfs = new IpfsApi('localhost', '5001', {protocol: 'http'});
 App = {
     web3Provider: null,
     contracts: {},
+    privateKey: null,
+    publicKey: null,
 
     init: function () {
         return App.initWeb3();
@@ -33,6 +35,29 @@ App = {
     bindEvents: function () {
         $(document).on('click', '.btn-upload', App.handleUpload);
         $(document).on('click', '.btn-update', App.handleUpdate);
+        $(document).on('click', '.btn-generate-keys', App.generateKeys);
+    },
+
+    setKeys: function(keys) {
+        App.privateKey = keys['private'];
+        App.publicKey = keys['public'];
+        $('#privateKey').text('Private: ' + App.privateKey);
+        $('#publicKey').text('Public: ' + App.publicKey);
+    },
+
+    generateKeys: function () {
+        $.ajax({
+            type: 'GET',
+            url: 'http://localhost:8000/generate_key_pair',
+            success: function (data, textStatus, jqXHR1) {
+                App.setKeys(data);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.error(textStatus);
+                console.error(jqXHR.responseJSON);
+                console.error(errorThrown);
+            }
+        });
     },
 
     uploadFileToIpfs: function(encryptedFile) {
@@ -59,7 +84,7 @@ App = {
     encryptFile: function(file) {
         const data = {
             file: file,
-            public_key: "A+UPzODJwkAORU3LQLFp/p4Q6earf+oi5aQW52sFFIms"
+            public_key: App.publicKey
         };
         $.ajax({
             type: 'POST',
@@ -110,8 +135,8 @@ App = {
     decrypt: function (event) {
         const data = {
             file: event.target.getAttribute('encryptedFile'),
-            public_key: "A+UPzODJwkAORU3LQLFp/p4Q6earf+oi5aQW52sFFIms",
-            private_key: "ctP64jAPE1bsgR8wSW5UHHHC+vB2EvwTv2SKsb6JixU=",
+            public_key: App.publicKey,
+            private_key: App.privateKey
         };
         $.ajax({
             type: 'POST',

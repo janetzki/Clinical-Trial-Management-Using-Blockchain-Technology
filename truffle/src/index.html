@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Medical Record System</title>
+    <title>Clinical Trial Management Platform</title>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
@@ -19,15 +19,48 @@
 <div class="container">
     <div class="row">
         <div class="col-xs-12 col-sm-8 col-sm-push-2">
-            <h1 class="text-center">Medical Record System</h1>
+            <h1 class="text-center">Clinical Trial Management Platform</h1>
             <hr/>
             <br/>
         </div>
     </div>
 
-    <input id="file-upload" type="file">
-    <button class="btn btn-default btn-upload" type="button">Upload medical record</button>
-    <button class="btn btn-default btn-update" type="button">Update records</button>
+    <div class="row">
+        <div class="col-sm">
+            <button class="btn btn-default btn-upload" type="button">Upload medical record</button>
+        </div>
+        <div class="col-sm">
+            <input id="file-upload" type="file">
+        </div>
+    </div>
+    <br/>
+
+    <div class="row">
+        <div class="col-sm">
+            <button class="btn btn-default btn-generate-keys" type="button">Generate keys</button>
+        </div>
+        <div class="col-sm">
+            <p id="privateKey"></p>
+            <p id="publicKey"></p>
+        </div>
+    </div>
+    <br/>
+
+    <div class="row">
+        <div class="col-sm">
+            <button class="btn btn-default btn-upload-keys" type="button">Grant access</button>
+        </div>
+        <div class="col-sm">
+            <input id="key-upload" type="file">
+        </div>
+    </div>
+    <br/>
+
+    <div class="row">
+        <div class="col-sm">
+            <button class="btn btn-default btn-update" type="button">Show records</button>
+        </div>
+    </div>
     <ol id="records">
     </ol>
 </div>
