@@ -33,6 +33,57 @@ App = {
         $(document).on('click', '.btn-update', App.handleUpdate);
     },
 
+    uploadFileToIpfs: function(encryptedFile) {
+        console.log(encryptedFile);
+        const buffer = Buffer.from(encryptedFile);
+        console.log(buffer);
+        ipfs.add(buffer, (err, ipfsHash) => {
+            console.log(err, ipfsHash);
+            const fileHash = ipfsHash[0].hash;
+
+            web3.eth.getAccounts(function (error, accounts) {
+                if (error) {
+                    console.log(error);
+                }
+
+                const account = accounts[0]; // Usually, there is only one account.
+
+                App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
+                    return medicalRecordSystemInstance.upload(fileHash, {from: account});
+                }).catch(function (err) {
+                    console.log(err.message);
+                });
+            });
+        });
+    },
+
+    encryptFile: function(file) {
+        console.log(file);
+        const data = {
+            file: file,
+            public_key: 'A2Giv7jezW52yaAtc1ZHAHBftQaf8kb21+qcgKV+QJX+'
+        };
+        console.log(data);
+        $.ajax({
+            type: 'POST',
+            dataType: 'json',
+            url: 'http://localhost:8000/encrypt',
+            data: data,
+            //contentType: 'application/json',
+            success: function (data, textStatus, jqXHR1) {
+                console.log('c');
+                App.uploadFileToIpfs(JSON.stringify(data));
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.log('d');
+                console.error(textStatus);
+                console.error(jqXHR.responseJSON);
+                console.error(errorThrown);
+            }
+        });
+        console.log('b');
+    },
+
     handleUpload: function (event) {
         event.preventDefault();
 
@@ -44,27 +95,10 @@ App = {
         const file = fileUploader.files[0];
         const reader = new FileReader();
 
-        reader.readAsArrayBuffer(file);
+        reader.readAsText(file);
         reader.onload = function (reader) {
-            const buffer = Buffer.from(reader.target.result);
-            ipfs.add(buffer, (err, ipfsHash) => {
-                console.log(err, ipfsHash);
-                const fileHash = ipfsHash[0].hash;
-
-                web3.eth.getAccounts(function (error, accounts) {
-                    if (error) {
-                        console.log(error);
-                    }
-
-                    const account = accounts[0]; // Usually, there is only one account.
-
-                    App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
-                        return medicalRecordSystemInstance.upload(fileHash, {from: account});
-                    }).catch(function (err) {
-                        console.log(err.message);
-                    });
-                });
-            });
+            const file = reader.target.result;
+            App.encryptFile(file);
         };
     },
 
