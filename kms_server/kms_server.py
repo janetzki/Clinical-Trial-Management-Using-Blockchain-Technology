@@ -1,10 +1,11 @@
 import json
-from npre import bbs98
+from umbral import (
+    pre,
+    keys
+)
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from cgi import parse_header, parse_multipart, parse_qs
 from base64 import b64encode
-
-pre = bbs98.PRE()
 
 
 class KmsHandler(BaseHTTPRequestHandler):
@@ -17,13 +18,13 @@ class KmsHandler(BaseHTTPRequestHandler):
         # TODO: Implement HTTPS connection
         self._set_headers()
         if self.path == '/generate_key_pair':
-            private_key = pre.gen_priv(dtype=bytes)
-            public_key = pre.priv2pub(private_key)
-            keys = {
-                'private': b64encode(private_key).decode('utf-8'),
-                'public': b64encode(public_key).decode('utf-8')
+            private_key = keys.UmbralPrivateKey.gen_key()
+            public_key = private_key.get_pubkey()
+            key_pair = {
+                'private': b64encode(private_key.to_bytes()).decode('utf-8'),
+                'public': b64encode(public_key.to_bytes()).decode('utf-8')
             }
-            json_string = json.dumps(keys).encode('ascii')
+            json_string = json.dumps(key_pair).encode('ascii')
             self.wfile.write(json_string)
 
     def do_HEAD(self):
@@ -41,9 +42,20 @@ class KmsHandler(BaseHTTPRequestHandler):
         self._set_headers()
         if self.path == '/encrypt' or self.path == '/decrypt':
             file = postvars['file']
-            key = postvars['key']
-            encrypted_file = pre.encrypt(key, file)
-            json_string = json.dumps(encrypted_file)
+            public_key = postvars['public_key']
+            if self.path == '/encrypt':
+                encrypted_file, capsule = pre.encrypt(public_key, file)
+                json_string = json.dumps({
+                    'file': encrypted_file,
+                    'capsule': capsule
+                })
+            else:
+                private_key = postvars['private_key']
+                capsule = postvars['capsule']
+                encrypted_file = pre.decrypt(file, capsule, private_key, public_key)
+                json_string = json.dumps({
+                    'file': encrypted_file
+                })
             self.wfile.write(json_string)
 
 

@@ -12,3 +12,6 @@ build/
 
 # Data
 fake_data/
+
+# External code
+external/
