@@ -4,7 +4,7 @@ This platform simplifies the recruitment process of clinical trials by allowing 
 
 <br></br>
 ## Requirements
-Make sure that you have the following software installed:
+Make sure that you have installed the following software:
 - [Ganache](https://github.com/trufflesuite/ganache)
 - [IPFS](https://github.com/ipfs/go-ipfs)
 - [MetaMask](https://metamask.io/)
