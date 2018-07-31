@@ -38,9 +38,27 @@ Start the web server:
 ```
 sudo npm run dev
 ```
-This should open the platform in your default browser.
+This should open the platform in your browser. You can also access it at `localhost:80`.
 
 Use MetaMask to connect to the Ganache blockchain.
+
+
+## Usage
+First, login as a patient or medical professional by clicking the respective button. You should see a respective web page.
+
+
+### As a Patient
+Note that the following steps require to interact with MetaMask:
+- Generate a key pair and store it at a save location.
+- Select and upload a medical record. Examples can be found in `examples/medical records/`.
+- Click "Show records" to see a list of your records. Open the link in a new window to see the encrypted content. Click "Decrypt" to see its original content.
+- You can grant access to a medical professional, who already has a key pair. If not, first login as a medical professional as described below. Than enter its blockchain address into the text field and click "Grant access". In MetaMask, you can choose for which files you want to provide access rights.
+
+
+### As a Medical Professional
+Note that you need to switch your blockchain account in MetaMask to login as another user:
+- Generate a key pair and store it at a save location.
+- Click "Show records" to see a full list of all medical records you have access to. You can use "Decrypt" and the link in the same way as the owner of the record.
 
 
 ## Test the Smart Contract
@@ -48,4 +66,3 @@ Use MetaMask to connect to the Ganache blockchain.
 cd truffle
 truffle test
 ```
-
