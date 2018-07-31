@@ -1,0 +1,12 @@
+{
+  "port": 80,
+  "server": {
+    "baseDir": [
+      "./web_server",
+      "./truffle/build/contracts"
+    ],
+    "routes": {
+      "/": "./"
+    }
+  }
+}
