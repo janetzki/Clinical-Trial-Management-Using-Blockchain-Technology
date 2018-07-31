@@ -8,16 +8,6 @@ App = {
     files: {},
 
     init: function () {
-        const isFirefox = typeof InstallTrigger !== 'undefined';
-        if (isFirefox) {
-            $('#title').text('Welcome, patient!');
-            $('#body').css('background', 'linear-gradient(to bottom, #eeeeff 0%, #aaaaff 100%)');
-        } else {
-            $('#title').text('Welcome, doctor!');
-            $('#body').css('background', 'linear-gradient(to bottom, #eeffee 0%, #aaffaa 100%)');
-            $("#upload-record").css('display', 'none');
-            $("#grant-access").css('display', 'none');
-        }
         return App.initWeb3();
     },
 
@@ -42,10 +32,31 @@ App = {
     },
 
     bindEvents: function () {
+        $(document).on('click', '.btn-login-patient', App.loginAsPatient);
+        $(document).on('click', '.btn-login-medic', App.loginAsMedic);
         $(document).on('click', '.btn-upload', App.handleUpload);
         $(document).on('click', '.btn-update', App.handleUpdate);
         $(document).on('click', '.btn-generate-keys', App.generateKeys);
         $(document).on('click', '.btn-grant-access', App.grantAccess);
+    },
+
+    leaveLoginPage: function() {
+        $('#loginPage').css('display', 'none');
+        $('#contentPage').css('display', 'block');
+    },
+
+    loginAsPatient: function() {
+        App.leaveLoginPage();
+        $('#title').text('Welcome, patient!');
+        $('#body').css('background', 'linear-gradient(to bottom, #eeeeff 0%, #aaaaff 100%)');
+    },
+
+    loginAsMedic: function() {
+        App.leaveLoginPage();
+        $('#title').text('Welcome, doctor!');
+        $('#body').css('background', 'linear-gradient(to bottom, #eeffee 0%, #aaffaa 100%)');
+        $("#upload-record").css('display', 'none');
+        $("#grant-access").css('display', 'none');
     },
 
     grantAccess: function (event) {
@@ -130,7 +141,7 @@ App = {
         });
     },
 
-    uploadFileToIpfs: function(encryptedFile) {
+    uploadFileToIpfs: function (encryptedFile) {
         const buffer = Buffer.from(encryptedFile);
         ipfs.add(buffer, (err, ipfsHash) => {
             const fileHash = ipfsHash[0].hash;
@@ -151,7 +162,7 @@ App = {
         });
     },
 
-    encryptFile: function(file) {
+    encryptFile: function (file) {
         const data = {
             file: file,
             public_key: App.publicKey
@@ -192,7 +203,7 @@ App = {
 
     getFile: function (url, callback, hash, fileName, list) {
         const xmlHttp = new XMLHttpRequest();
-        xmlHttp.onreadystatechange = function() {
+        xmlHttp.onreadystatechange = function () {
             if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
                 callback(url, xmlHttp.responseText, hash, fileName, list);
             }
@@ -238,7 +249,7 @@ App = {
         });
     },
 
-    showFileLink: function(url, encryptedFile, hash, fileName, list) {
+    showFileLink: function (url, encryptedFile, hash, fileName, list) {
         const link = document.createElement('a');
         link.appendChild(document.createTextNode(fileName));
         link.title = fileName;
