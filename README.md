@@ -2,7 +2,7 @@
 This platform simplifies the recruitment process of clinical trials by allowing faster communication between patients and representatives of pharmaceutical institutions. Patients can securely upload their medical records and grant access to medical professionals.
 
 
-</br>
+<br></br>
 ## Requirements
 Make sure that you have the following software installed:
 - Python 3.5
@@ -13,7 +13,7 @@ Make sure that you have the following software installed:
 - Ganache
 
 
-</br>
+<br></br>
 ## Setup
 Clone the repository and navigate into its main directory.
 Install the requirements:
@@ -46,12 +46,12 @@ This should open the platform in your browser. You can also access it at `localh
 Use MetaMask to connect to the Ganache blockchain.
 
 
-</br>
+<br></br>
 ## Usage
 First, login as a patient or medical professional by clicking the respective button. You should see a respective web page.
 
 
-</br>
+<br></br>
 ### As a Patient
 Note that the following steps require to interact with MetaMask:
 - Generate a key pair and store it at a save location.
@@ -60,14 +60,14 @@ Note that the following steps require to interact with MetaMask:
 - You can grant access to a medical professional, who already has a key pair. If not, first login as a medical professional as described below. Than enter its blockchain address into the text field and click "Grant access". In MetaMask, you can choose for which files you want to provide access rights.
 
 
-</br>
+<br></br>
 ### As a Medical Professional
 Note that you need to switch your blockchain account in MetaMask to login as another user:
 - Generate a key pair and store it at a save location.
 - Click "Show records" to see a full list of all medical records you have access to. You can use "Decrypt" and the link in the same way as the owner of the record.
 
 
-</br>
+<br></br>
 ## Test the Smart Contract
 ```
 cd truffle
