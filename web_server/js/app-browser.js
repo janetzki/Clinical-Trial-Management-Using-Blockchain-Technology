@@ -1,4 +1,313 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function (Buffer){
+const ipfs = new IpfsApi('localhost', '5001', {protocol: 'http'});
+
+App = {
+    web3Provider: null,
+    contracts: {},
+    privateKey: null,
+    publicKey: null,
+    files: {},
+
+    init: function () {
+        return App.initWeb3();
+    },
+
+    initWeb3: function () {
+        if (typeof web3 !== 'undefined') {
+            App.web3Provider = web3.currentProvider;
+        } else {
+            App.web3Provider = new Web3.providers.HttpProvider('http://localhost:7545');
+        }
+        web3 = new Web3(App.web3Provider);
+
+        return App.initContract();
+    },
+
+    initContract: function () {
+        $.getJSON('MedicalRecordSystem.json', function (data) {
+            App.contracts.MedicalRecordSystem = TruffleContract(data);
+            App.contracts.MedicalRecordSystem.setProvider(App.web3Provider);
+        });
+
+        return App.bindEvents();
+    },
+
+    bindEvents: function () {
+        $(document).on('click', '.btn-login-patient', App.loginAsPatient);
+        $(document).on('click', '.btn-login-medic', App.loginAsMedic);
+        $(document).on('click', '.btn-upload', App.handleUpload);
+        $(document).on('click', '.btn-update', App.handleUpdate);
+        $(document).on('click', '.btn-generate-keys', App.generateKeys);
+        $(document).on('click', '.btn-grant-access', App.grantAccess);
+    },
+
+    leaveLoginPage: function() {
+        $('#loginPage').css('display', 'none');
+        $('#contentPage').css('display', 'block');
+    },
+
+    loginAsPatient: function() {
+        App.leaveLoginPage();
+        $('#title').text('Welcome, patient!');
+        $('#body').css('background', 'linear-gradient(to bottom, #eeeeff 0%, #aaaaff 100%)');
+    },
+
+    loginAsMedic: function() {
+        App.leaveLoginPage();
+        $('#title').text('Welcome, doctor!');
+        $('#body').css('background', 'linear-gradient(to bottom, #eeffee 0%, #aaffaa 100%)');
+        $("#upload-record").css('display', 'none');
+        $("#grant-access").css('display', 'none');
+    },
+
+    grantAccess: function (event) {
+        event.preventDefault();
+
+        const account = $('#recipient-address').val();
+        if (account === '') {
+            // alert('Enter a valid address');
+            return;
+        }
+
+        App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
+            return medicalRecordSystemInstance.getPublicKey.call(account);
+        }).then(function (publicKey) {
+            if (publicKey === '') {
+                // alert('This user does not have a public key yet.');
+                return;
+            }
+            for (const fileHash in App.files) {
+                console.log(fileHash);
+                const encryptedFile = App.files[fileHash];
+                const fileJson = JSON.parse(encryptedFile);
+                const data = {
+                    private_key: App.privateKey,
+                    public_key: publicKey,
+                    capsule: fileJson.capsule
+                };
+                $.ajax({
+                    type: 'POST',
+                    dataType: 'json',
+                    url: 'http://localhost:8000/grant_acess',
+                    data: data,
+                    success: function (data, textStatus, jqXHR1) {
+                        App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
+                            return medicalRecordSystemInstance.addReKey(account, fileHash, data.capsule);
+                        });
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.error(textStatus);
+                        console.error(jqXHR.responseJSON);
+                        console.error(errorThrown);
+                    }
+                });
+            }
+        }).catch(function (err) {
+            console.error(err.message);
+        });
+    },
+
+    setKeys: function (keys) {
+        web3.eth.getAccounts(function (error, accounts) {
+            if (error) {
+                console.error(error);
+            }
+            const account = accounts[0];
+
+            App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
+                return medicalRecordSystemInstance.setPublicKey(keys['public'], {from: account});
+            }).then(function (result) {
+                App.privateKey = keys['private'];
+                App.publicKey = keys['public'];
+                $('#privateKey').text('Private: ' + App.privateKey);
+                $('#publicKey').text('Public: ' + App.publicKey);
+            }).catch(function (err) {
+                console.error(err.message);
+            });
+        });
+    },
+
+    generateKeys: function () {
+        $.ajax({
+            type: 'GET',
+            url: 'http://localhost:8000/generate_key_pair',
+            success: function (data, textStatus, jqXHR1) {
+                App.setKeys(data);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.error(textStatus);
+                console.error(jqXHR.responseJSON);
+                console.error(errorThrown);
+            }
+        });
+    },
+
+    uploadFileToIpfs: function (encryptedFile) {
+        const buffer = Buffer.from(encryptedFile);
+        ipfs.add(buffer, (err, ipfsHash) => {
+            const fileHash = ipfsHash[0].hash;
+
+            web3.eth.getAccounts(function (error, accounts) {
+                if (error) {
+                    console.error(error);
+                }
+
+                const account = accounts[0]; // Usually, there is only one account.
+
+                App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
+                    return medicalRecordSystemInstance.upload(fileHash, {from: account});
+                }).catch(function (err) {
+                    console.error(err.message);
+                });
+            });
+        });
+    },
+
+    encryptFile: function (file) {
+        const data = {
+            file: file,
+            public_key: App.publicKey
+        };
+        $.ajax({
+            type: 'POST',
+            dataType: 'json',
+            url: 'http://localhost:8000/encrypt',
+            data: data,
+            success: function (data, textStatus, jqXHR1) {
+                App.uploadFileToIpfs(JSON.stringify(data));
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.error(textStatus);
+                console.error(jqXHR.responseJSON);
+                console.error(errorThrown);
+            }
+        });
+    },
+
+    handleUpload: function (event) {
+        event.preventDefault();
+
+        const fileUploader = $('#file-upload')[0];
+        if (!fileUploader.files || !fileUploader.files[0]) {
+            // alert('No file selected');
+            return;
+        }
+        const file = fileUploader.files[0];
+        const reader = new FileReader();
+
+        reader.readAsText(file);
+        reader.onload = function (reader) {
+            const file = reader.target.result;
+            App.encryptFile(file);
+        };
+    },
+
+    getFile: function (url, callback, hash, fileName, list) {
+        const xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function () {
+            if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+                callback(url, xmlHttp.responseText, hash, fileName, list);
+            }
+        };
+        xmlHttp.open('GET', url, true);
+        xmlHttp.send(null);
+    },
+
+    decrypt: function (event) {
+        const fileJson = JSON.parse(event.target.getAttribute('encryptedFile'));
+        const fileHash = event.target.getAttribute('fileHash');
+        const data = {
+            file: fileJson.file,
+            capsule: fileJson.capsule,
+            private_key: App.privateKey,
+            public_key: App.publicKey
+        };
+
+        App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
+            return medicalRecordSystemInstance.getReKey.call(fileHash);
+        }).then(function (reKey) {
+
+            if (reKey !== '') {
+                // medical professional
+                data.capsule = reKey;
+            }
+            $.ajax({
+                type: 'POST',
+                dataType: 'json',
+                url: 'http://localhost:8000/decrypt',
+                data: data,
+                success: function (data, textStatus, jqXHR1) {
+                    $('#record').text(data['file']);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.error(textStatus);
+                    console.error(jqXHR.responseJSON);
+                    console.error(errorThrown);
+                }
+            });
+        }).catch(function (err) {
+            console.error(err.message);
+        });
+    },
+
+    showFileLink: function (url, encryptedFile, hash, fileName, list) {
+        const link = document.createElement('a');
+        link.appendChild(document.createTextNode(fileName));
+        link.title = fileName;
+        link.href = url;
+
+        const button = document.createElement('button');
+        const idClass = 'btn-decrypt' + fileName;
+        button.textContent = 'Decrypt';
+        button.classList = 'btn btn-default decrypt-button btn-decrypt ' + idClass;
+        button.type = 'button';
+        button.setAttribute('encryptedFile', encryptedFile);
+        button.setAttribute('fileHash', hash);
+        $(document).on('click', '.' + idClass, App.decrypt);
+
+        const listItem = document.createElement('li');
+        listItem.appendChild(button);
+        listItem.appendChild(link);
+        list.appendChild(listItem);
+
+        App.files[hash] = encryptedFile;
+    },
+
+    handleUpdate: function (event) {
+        event.preventDefault();
+
+        App.contracts.MedicalRecordSystem.deployed().then(function (instance) {
+            return instance.getNumberOfRecords.call().then(function (numberOfRecords) {
+                numberOfRecords = numberOfRecords.toNumber();
+                const promises = [];
+                for (let i = 0; i < numberOfRecords; i++) {
+                    promises.push(instance.getRecordByIndex.call(i));
+                }
+                Promise.all(promises).then(function (hashes) {
+                    const list = document.getElementById('records');
+                    list.innerHTML = '';
+                    for (const i in hashes) {
+                        const hash = hashes[i];
+                        const url = 'http://localhost:8080/ipfs/' + hash;
+                        App.getFile(url, App.showFileLink, hash, 'Record_' + hash, list);
+                    }
+                });
+            })
+        }).catch(function (err) {
+            console.error(err.message);
+        });
+    },
+};
+
+$(function () {
+    $(window).load(function () {
+        App.init();
+    });
+});
+
+}).call(this,require("buffer").Buffer)
+},{"buffer":3}],2:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -151,7 +460,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -1889,7 +2198,7 @@ function numberIsNaN (obj) {
   return obj !== obj // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":1,"ieee754":3}],3:[function(require,module,exports){
+},{"base64-js":2,"ieee754":4}],4:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1
@@ -1975,115 +2284,4 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],4:[function(require,module,exports){
-(function (Buffer){
-const ipfs = new IpfsApi('localhost', '5001', {protocol: 'http'});
-
-App = {
-    web3Provider: null,
-    contracts: {},
-
-    init: function () {
-        return App.initWeb3();
-    },
-
-    initWeb3: function () {
-        if (typeof web3 !== 'undefined') {
-            App.web3Provider = web3.currentProvider;
-        } else {
-            App.web3Provider = new Web3.providers.HttpProvider('http://localhost:7545');
-        }
-        web3 = new Web3(App.web3Provider);
-
-        return App.initContract();
-    },
-
-    initContract: function () {
-        $.getJSON('MedicalRecordSystem.json', function (data) {
-            App.contracts.MedicalRecordSystem = TruffleContract(data);
-            App.contracts.MedicalRecordSystem.setProvider(App.web3Provider);
-        });
-
-        return App.bindEvents();
-    },
-
-    bindEvents: function () {
-        $(document).on('click', '.btn-upload', App.handleUpload);
-        $(document).on('click', '.btn-update', App.handleUpdate);
-    },
-
-    handleUpload: function (event) {
-        event.preventDefault();
-
-        const fileUploader = $('#file-upload')[0];
-        if (!fileUploader.files || !fileUploader.files[0]) {
-            console.error('No file selected');
-            return;
-        }
-        const file = fileUploader.files[0];
-        const reader = new FileReader();
-
-        reader.readAsArrayBuffer(file);
-        reader.onload = function (reader) {
-            const buffer = Buffer.from(reader.target.result);
-            ipfs.add(buffer, (err, ipfsHash) => {
-                console.log(err, ipfsHash);
-                const fileHash = ipfsHash[0].hash;
-
-                web3.eth.getAccounts(function (error, accounts) {
-                    if (error) {
-                        console.log(error);
-                    }
-
-                    const account = accounts[0]; // Usually, there is only one account.
-
-                    App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
-                        return medicalRecordSystemInstance.upload(fileHash, {from: account});
-                    }).catch(function (err) {
-                        console.log(err.message);
-                    });
-                });
-            });
-        };
-    },
-
-    handleUpdate: function (event) {
-        event.preventDefault();
-
-        App.contracts.MedicalRecordSystem.deployed().then(function (instance) {
-            return instance.getNumberOfRecords.call().then(function (numberOfRecords) {
-                numberOfRecords = numberOfRecords.toNumber();
-                const promises = [];
-                for (let i = 0; i < numberOfRecords; i++) {
-                    promises.push(instance.getRecordByIndex.call(i));
-                }
-                Promise.all(promises).then(function (hashes) {
-                    const list = document.getElementById('records');
-                    list.innerHTML = '';
-                    for (const hash of hashes) {
-                        const link = document.createElement('a');
-                        link.appendChild(document.createTextNode(hash));
-                        link.title = hash;
-                        link.href = 'http://localhost:8080/ipfs/' + hash;
-
-                        const listItem = document.createElement('li');
-                        // listItem.appendChild(document.createTextNode(hash));
-                        listItem.appendChild(link);
-                        list.appendChild(listItem);
-                    }
-                });
-            })
-        }).catch(function (err) {
-            console.log(err.message);
-        });
-    },
-};
-
-$(function () {
-    $(window).load(function () {
-        App.init();
-    });
-});
-
-}).call(this,require("buffer").Buffer)
-},{"buffer":2}]},{},[4]);
+},{}]},{},[1]);

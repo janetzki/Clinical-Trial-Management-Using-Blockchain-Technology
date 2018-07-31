@@ -1,20 +1,25 @@
 {
   "name": "clinical-trial-management",
   "description": "Clinical Trial Management Using Blockchain Technology",
-  "version": "0.0.1",
-  "private": true,
+  "version": "1.0.0",
+  "main": "truffle.js",
+  "directories": {
+    "test": "test"
+  },
   "scripts": {
-    "start": "node ./bin/www"
+    "dev": "lite-server",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jonathan Janetzki",
+  "devDependencies": {
+    "lite-server": "^2.3.0"
   },
   "dependencies": {
-    "cookie-parser": "~1.4.3",
-    "debug": "~2.6.9",
-    "express": "~4.16.0",
-    "http-errors": "~1.6.2",
-    "morgan": "~1.9.0",
-    "pug": "2.0.0-beta11",
-    "ganache-cli": "6.1.2",
-    "web3": "1.0.0-beta.34 extraneous",
-    "truffle": "4.1.11"
+    "bootstrap": "^4.1.1",
+    "buffer": "^5.1.0",
+    "cryptojs": "^2.5.3",
+    "fs-extra": "^6.0.1",
+    "ipfs-api": "^22.1.0",
+    "truffle-contract": "^3.0.5"
   }
 }
