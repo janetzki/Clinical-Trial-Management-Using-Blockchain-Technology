@@ -10,8 +10,5 @@ node_modules/
 # Output
 build/
 
-# Data
-fake_data/
-
 # External code
 external/

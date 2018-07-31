@@ -64,7 +64,7 @@ App = {
 
         const account = $('#recipient-address').val();
         if (account === '') {
-            // alert('Enter a valid address');
+            console.error('Enter a valid address');
             return;
         }
 
@@ -72,7 +72,7 @@ App = {
             return medicalRecordSystemInstance.getPublicKey.call(account);
         }).then(function (publicKey) {
             if (publicKey === '') {
-                // alert('This user does not have a public key yet.');
+                console.error('This user does not have a public key yet.');
                 return;
             }
             for (const fileHash in App.files) {
@@ -188,7 +188,7 @@ App = {
 
         const fileUploader = $('#file-upload')[0];
         if (!fileUploader.files || !fileUploader.files[0]) {
-            // alert('No file selected');
+            console.error('No file selected');
             return;
         }
         const file = fileUploader.files[0];
