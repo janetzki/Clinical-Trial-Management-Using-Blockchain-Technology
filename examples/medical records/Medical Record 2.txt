@@ -1,0 +1,3 @@
+Sports:
+	- 30 min jogging each day
+	- no swimming

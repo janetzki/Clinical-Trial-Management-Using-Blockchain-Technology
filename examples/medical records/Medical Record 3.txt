@@ -1,0 +1,4 @@
+Diseases:
+	- coughs
+	- cold
+	- hoarseness
