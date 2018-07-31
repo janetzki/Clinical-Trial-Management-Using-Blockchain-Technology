@@ -66,7 +66,8 @@ class KmsHandler(BaseHTTPRequestHandler):
                 file = b64decode(postvars[b'file'][0])
                 capsule = b64decode(postvars[b'capsule'][0])
                 capsule = pre.Capsule.from_bytes(capsule, public_key.params)
-                decrypted_file = pre.decrypt(file, capsule, private_key)
+                public_key = capsule.get_correctness_keys()['delegating']
+                decrypted_file = pre.decrypt(file, capsule, private_key, public_key)
                 json_string = json.dumps({
                     'file': decrypted_file.decode('utf8')
                 }).encode('ascii')

@@ -15,11 +15,12 @@
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 </head>
 
-<body>
+<body id="body">
 <div class="container">
+    <br/>
     <div class="row">
         <div class="col-xs-12 col-sm-8 col-sm-push-2">
-            <h1 class="text-center">Clinical Trial Management Platform</h1>
+            <h1 id="title" class="text-center">Clinical Trial Management Platform</h1>
             <hr/>
             <br/>
         </div>
@@ -36,7 +37,7 @@
     </div>
     <br/>
 
-    <div class="row">
+    <div id="upload-record" class="row">
         <div class="col-sm">
             <button class="btn btn-default btn-upload" type="button">Upload medical record</button>
         </div>
@@ -46,7 +47,7 @@
     </div>
     <br/>
 
-    <div class="row">
+    <div id="grant-access" class="row">
         <div class="col-sm">
             <button class="btn btn-default btn-grant-access" type="button">Grant access</button>
         </div>
@@ -63,6 +64,11 @@
     </div>
     <ol id="records">
     </ol>
+    <br/>
+
+    <div class="row">
+        <p id="record"></p>
+    </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/core-min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/hmac-sha512.js"></script>

@@ -2,10 +2,6 @@
   "port": 80,
   "server": {
     "baseDir": ["./src", "./build/contracts"],
-    "routes": {
-      "/": "./",
-      "/patient": "./patient",
-      "/medic": "./medic"
-    }
+    "routes": {"/": "./"}
   }
 }

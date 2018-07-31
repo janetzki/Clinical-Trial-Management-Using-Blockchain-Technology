@@ -1,3 +1,7 @@
 .decrypt-button {
     margin: 10px;
 }
+
+html, body {
+    height: 100%;
+}
