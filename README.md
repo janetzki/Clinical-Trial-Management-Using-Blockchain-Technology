@@ -31,10 +31,10 @@ sudo npm start
 Go back to the main directory and initialize the smart contracts:
 ```
 cd truffle
-truffle compile
-truffle migrate
+sudo truffle compile
+sudo truffle migrate
 ```
-(Troubleshooting: delete the `truffle/build/` directory)
+(Troubleshooting: If the migration step fails delete the `build/` directory and try again.)
 
 
 Start the IPFS daemon:
@@ -46,7 +46,7 @@ ipfs daemon
 
 From the main directory, start the key management system:
 ```
-sudo python kms_server.py
+python kms_server.py
 ```
 
 
