@@ -13,7 +13,7 @@ App = {
 
     initWeb3: function () {
         if (typeof web3 !== 'undefined') {
-            App.web3Provider = web3.currentProvider;
+            App.web3Provider = web3.currentProvider; // Connects to MetaMask
         } else {
             App.web3Provider = new Web3.providers.HttpProvider('http://localhost:7545');
         }
@@ -23,7 +23,7 @@ App = {
     },
 
     initContract: function () {
-        $.getJSON('MedicalRecordSystem.json', function (data) {
+        $.getJSON('/truffle/build/contracts/MedicalRecordSystem.json', function (data) {
             App.contracts.MedicalRecordSystem = TruffleContract(data);
             App.contracts.MedicalRecordSystem.setProvider(App.web3Provider);
         });
@@ -32,31 +32,10 @@ App = {
     },
 
     bindEvents: function () {
-        $(document).on('click', '.btn-login-patient', App.loginAsPatient);
-        $(document).on('click', '.btn-login-medic', App.loginAsMedic);
         $(document).on('click', '.btn-upload', App.handleUpload);
         $(document).on('click', '.btn-update', App.handleUpdate);
         $(document).on('click', '.btn-generate-keys', App.generateKeys);
         $(document).on('click', '.btn-grant-access', App.grantAccess);
-    },
-
-    leaveLoginPage: function() {
-        $('#loginPage').css('display', 'none');
-        $('#contentPage').css('display', 'block');
-    },
-
-    loginAsPatient: function() {
-        App.leaveLoginPage();
-        $('#title').text('Welcome, patient!');
-        $('#body').css('background', 'linear-gradient(to bottom, #eeeeff 0%, #aaaaff 100%)');
-    },
-
-    loginAsMedic: function() {
-        App.leaveLoginPage();
-        $('#title').text('Welcome, doctor!');
-        $('#body').css('background', 'linear-gradient(to bottom, #eeffee 0%, #aaffaa 100%)');
-        $("#upload-record").css('display', 'none');
-        $("#grant-access").css('display', 'none');
     },
 
     grantAccess: function (event) {
@@ -76,7 +55,6 @@ App = {
                 return;
             }
             for (const fileHash in App.files) {
-                console.log(fileHash);
                 const encryptedFile = App.files[fileHash];
                 const fileJson = JSON.parse(encryptedFile);
                 const data = {
@@ -111,7 +89,7 @@ App = {
             if (error) {
                 console.error(error);
             }
-            const account = accounts[0];
+            const account = accounts[0]; // There is only one account if you are logged in using MetaMask.
 
             App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
                 return medicalRecordSystemInstance.setPublicKey(keys['public'], {from: account});
@@ -151,7 +129,7 @@ App = {
                     console.error(error);
                 }
 
-                const account = accounts[0]; // Usually, there is only one account.
+                const account = accounts[0]; // There is only one account if you are logged in using MetaMask.
 
                 App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
                     return medicalRecordSystemInstance.upload(fileHash, {from: account});
@@ -298,8 +276,6 @@ App = {
     },
 };
 
-$(function () {
-    $(window).load(function () {
-        App.init();
-    });
-});
+window.onload = function () {
+    App.init();
+};

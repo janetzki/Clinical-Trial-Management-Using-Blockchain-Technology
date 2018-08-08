@@ -129,6 +129,7 @@ App = {
     },
 
     generateKeys: function () {
+        console.log('ha');
         $.ajax({
             type: 'GET',
             url: 'http://localhost:8000/generate_key_pair',
