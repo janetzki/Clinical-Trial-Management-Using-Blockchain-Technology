@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "dev": "lite-server",
+    "start": "node web_server/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jonathan Janetzki",
@@ -20,6 +20,7 @@
     "cryptojs": "^2.5.3",
     "fs-extra": "^6.0.1",
     "ipfs-api": "^22.1.0",
-    "truffle-contract": "^3.0.5"
+    "truffle-contract": "^3.0.5",
+    "express": "^4.16.3"
   }
 }

@@ -52,7 +52,7 @@ python kms_server.py
 
 Start the web server:
 ```
-sudo npm run dev
+sudo npm start
 ```
 This should open the platform in your browser. You can also access it at `localhost:80`.
 
