@@ -9,8 +9,8 @@ contract TestMedicalRecordSystem {
 
     // Test if a patient can upload a file
     function testUploadFile() public {
-        string memory hash = "12345";
-        bool success = recordSystem.upload(hash);
+        string memory hashPointer = "12345";
+        bool success = recordSystem.upload(hashPointer);
         Assert.equal(success, true, "A patient should be able to upload a file.");
     }
 
@@ -22,8 +22,8 @@ contract TestMedicalRecordSystem {
 
     // Test if a patient can download their records
     function testDownloadFile() public {
-        string memory hash = "12345";
+        string memory hashPointer = "12345";
         string memory record = recordSystem.getRecordByIndex(0);
-        Assert.equal(record, hash, "A patient should be able to download their records.");
+        Assert.equal(record, hashPointer, "A patient should be able to download their records.");
     }
 }

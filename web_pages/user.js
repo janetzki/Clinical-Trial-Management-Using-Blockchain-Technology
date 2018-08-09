@@ -52,7 +52,8 @@ App = {
 
     bindEvents: function () {
         $(document).on('click', '.btn-upload', App.handleUpload);
-        $(document).on('click', '.btn-update', App.handleUpdate);
+        $(document).on('click', '.btn-update', App.handleUpdateForPatient);
+        $(document).on('click', '.btn-update-medic', App.handleUpdateForMedic);
         $(document).on('click', '.btn-generate-keys', App.generateKeys);
         $(document).on('click', '.btn-grant-access', App.grantAccessForAllFiles);
     },
@@ -287,23 +288,37 @@ App = {
         xmlHttp.send(null);
     },
 
-    getFiles: function (callback, callbackData) {
+    getFiles: function (callback, callbackData, patient) {
+        if (callbackData === undefined) {
+            callbackData = {};
+        }
+
         App.contracts.MedicalRecordSystem.deployed().then(function (instance) {
-            return instance.getNumberOfRecords.call().then(function (numberOfRecords) {
+            let promise;
+
+            if (patient === undefined) {
+                promise = instance.getNumberOfRecords.call();
+            } else {
+                promise = instance.getNumberOfForeignRecords.call(patient);
+            }
+
+            promise.then(function (numberOfRecords) {
                 numberOfRecords = numberOfRecords.toNumber();
                 const promises = [];
+
                 for (let i = 0; i < numberOfRecords; i++) {
-                    promises.push(instance.getRecordByIndex.call(i));
+                    if (patient === undefined) {
+                        promises.push(instance.getRecordByIndex.call(i));
+                    } else {
+                        promises.push(instance.getForeignRecordByIndex.call(patient, i));
+                    }
                 }
+
                 Promise.all(promises).then(function (hashes) {
                     const list = document.getElementById('records');
                     list.innerHTML = '';
+                    callbackData.list = list;
                     for (const i in hashes) {
-                        if (callbackData === undefined) {
-                            callbackData = {};
-                        }
-
-                        callbackData.list = list;
                         App.getFile(hashes[i], callback, callbackData);
                     }
                 });
@@ -313,9 +328,15 @@ App = {
         });
     },
 
-    handleUpdate: function (event) {
+    handleUpdateForPatient: function (event) {
         event.preventDefault();
         App.getFiles(App.showFileLink);
+    },
+
+    handleUpdateForMedic: function (event) {
+        event.preventDefault();
+        const patientAccount = $('#patient-address').val();
+        App.getFiles(App.showFileLink, undefined, patientAccount);
     },
 };
 
