@@ -1,24 +1,26 @@
 pragma solidity ^0.4.22;
 
 contract MedicalRecordSystem {
-    mapping(address => string[]) public records;
-    mapping(address => string)   public publicKeys;
+    mapping(address => string[]) public ownRecords;
+    mapping(address => mapping(address => string[])) public foreignRecords;
+    mapping(address => string) public publicKeys;
     mapping(address => mapping(bytes32 => string)) public reKeys;
 
-    function upload(string recordHash) public returns (bool) {
+
+    function upload(string hashPointer) public returns (bool) {
         address patient = msg.sender;
-        records[patient].push(recordHash);
+        ownRecords[patient].push(hashPointer);
         return true;
     }
 
     function getNumberOfRecords() public view returns (uint) {
         address patient = msg.sender;
-        return records[patient].length;
+        return ownRecords[patient].length;
     }
 
     function getRecordByIndex(uint index) public view returns (string) {
         address patient = msg.sender;
-        return records[patient][index];
+        return ownRecords[patient][index];
     }
 
 
@@ -33,18 +35,28 @@ contract MedicalRecordSystem {
     }
 
 
-    function addReKey(address recipient, string fileHash, string reKey) public returns (bool) {
-        address sender = msg.sender;
-        records[recipient] = records[sender];
-        bytes32 fileHashBytes = stringToBytes32(fileHash);
-        reKeys[recipient][fileHashBytes] = reKey;
+    function addReKey(address medic, string hashPointer, string reKey) public returns (bool) {
+        address patient = msg.sender;
+        foreignRecords[medic][patient] = ownRecords[patient];
+        bytes32 hashPointerBytes = stringToBytes32(hashPointer);
+        reKeys[medic][hashPointerBytes] = reKey;
         return true;
     }
 
-    function getReKey(string fileHash) public view returns (string) {
-        address patient = msg.sender;
-        bytes32 fileHashBytes = stringToBytes32(fileHash);
-        return reKeys[patient][fileHashBytes];
+    function getReKey(string hashPointer) public view returns (string) {
+        address medic = msg.sender;
+        bytes32 hashPointerBytes = stringToBytes32(hashPointer);
+        return reKeys[medic][hashPointerBytes];
+    }
+
+    function getNumberOfForeignRecords(address patient) public view returns (uint) {
+        address medic = msg.sender;
+        return foreignRecords[medic][patient].length;
+    }
+
+    function getForeignRecordByIndex(address patient, uint index) public view returns (string) {
+        address medic = msg.sender;
+        return foreignRecords[medic][patient][index];
     }
 
 
