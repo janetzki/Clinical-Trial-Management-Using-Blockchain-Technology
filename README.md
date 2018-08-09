@@ -43,6 +43,11 @@ ipfs init
 ipfs daemon
 ```
 
+Allow local requests to the IPFS daemon:
+```
+ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["http://localhost"]'
+```
+
 
 From the main directory, start the key management system:
 ```
@@ -66,16 +71,17 @@ First, login as a patient or medical professional by clicking the respective but
 
 ### As a Patient
 Note that the following steps require to interact with MetaMask.
-- Click "Generate keys" to generate a new key pair and store it at a save location.
+- Click "Generate keys" to generate a new key pair and store the secret key at a safe location. The public key is stored on the blockchain and will be loaded when you refresh the window. You need to re-enter the secret key manually.
 - Click "Browse" to select a medical record. Examples can be found in `examples/medical records/`. Click "Upload medical record" to upload it to the platform.
 - Click "Show records" to see a list of the hash pointers to your uploaded records. Open the link in a new window to see the encrypted content. Click "Decrypt" to see its original content.
-- You can grant access to a medical professional, who already has a key pair. If not, first login as a medical professional as described below. Then enter its blockchain address into the text field and click "Grant access". In MetaMask, you can choose for which files you want to provide access rights.
+- You can grant access to a medical professional, who already has a key pair. If not, first login as a medical professional as described below. Then enter its blockchain address into the text field and click "Grant access". In MetaMask, you can choose for which files you want to grant access rights.
 
 
 ### As a Medical Professional
-Note that you need to switch your blockchain account in MetaMask to login as another user.
-- Generate a key pair and store it at a save location.
-- Click "Show records" to see a full list of all medical records you have access to. You can use "Decrypt" and the link in the same way as the owner of the record.
+Note that you need to switch your blockchain account in MetaMask to login as another user. This works best with two different browsers.
+- Like for the patient, generate a key pair and store the secret key at a safe location.
+- Enter the blockchain address of a patient that granted access to their medical records.
+- Click "Show records" to see a full list of all medical records for this patient you have access to. You can use "Decrypt" and the link in the same way as the owner of the record.
 
 
 <br></br>
