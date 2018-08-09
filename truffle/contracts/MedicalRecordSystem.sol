@@ -35,7 +35,7 @@ contract MedicalRecordSystem {
 
     function addReKey(address recipient, string fileHash, string reKey) public returns (bool) {
         address sender = msg.sender;
-        records[recipient] += records[sender];
+        records[recipient] = records[sender];
         bytes32 fileHashBytes = stringToBytes32(fileHash);
         reKeys[recipient][fileHashBytes] = reKey;
         return true;
