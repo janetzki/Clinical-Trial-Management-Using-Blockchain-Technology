@@ -54,7 +54,7 @@ Start the web server:
 ```
 sudo npm start
 ```
-This should open the platform in your browser. You can also access it at `localhost:80`.
+You can now access the platform at `localhost:80` in your browser.
 
 Use MetaMask to connect to the Ganache blockchain.
 
