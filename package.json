@@ -7,19 +7,18 @@
     "test": "test"
   },
   "scripts": {
-    "dev": "lite-server",
+    "start": "node web-server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jonathan Janetzki",
-  "devDependencies": {
-    "lite-server": "^2.3.0"
-  },
   "dependencies": {
     "bootstrap": "^4.1.1",
     "buffer": "^5.1.0",
     "cryptojs": "^2.5.3",
+    "express": "^4.16.3",
     "fs-extra": "^6.0.1",
     "ipfs-api": "^22.1.0",
+    "jquery": "^3.3.1",
     "truffle-contract": "^3.0.5"
   }
 }

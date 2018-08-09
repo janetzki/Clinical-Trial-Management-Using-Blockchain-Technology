@@ -31,10 +31,10 @@ sudo npm start
 Go back to the main directory and initialize the smart contracts:
 ```
 cd truffle
-truffle compile
-truffle migrate
+sudo truffle compile
+sudo truffle migrate
 ```
-(Troubleshooting: delete the `truffle/build/` directory)
+(Troubleshooting: If the migration step fails delete the `build/` directory and try again.)
 
 
 Start the IPFS daemon:
@@ -46,15 +46,15 @@ ipfs daemon
 
 From the main directory, start the key management system:
 ```
-sudo python kms_server.py
+python kms_server.py
 ```
 
 
 Start the web server:
 ```
-sudo npm run dev
+sudo npm start
 ```
-This should open the platform in your browser. You can also access it at `localhost:80`.
+You can now access the platform at `localhost:80` in your browser.
 
 Use MetaMask to connect to the Ganache blockchain.
 
