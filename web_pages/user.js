@@ -27,8 +27,8 @@ App = {
             }
             const account = accounts[0]; // There is only one account if you are logged in using MetaMask.
 
-            App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
-                return medicalRecordSystemInstance.getPublicKey.call(account);
+            App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
+                return recordSystem.getPublicKey.call(account);
             }).then(function (publicKey) {
                 const keys = {
                     'private': '',
@@ -73,8 +73,8 @@ App = {
             hash: callbackData.hash,
             success: function (data, textStatus, jqXHR1) {
                 const hash = this.hash;
-                App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
-                    return medicalRecordSystemInstance.addReKey(callbackData.account, hash, data.re_key);
+                App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
+                    return recordSystem.addReKey(callbackData.account, hash, data.re_key);
                 });
             },
             error: function (jqXHR, textStatus, errorThrown) {
@@ -94,8 +94,8 @@ App = {
             return;
         }
 
-        App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
-            return medicalRecordSystemInstance.getPublicKey.call(account);
+        App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
+            return recordSystem.getPublicKey.call(account);
         }).then(function (publicKey) {
             if (publicKey === '') {
                 console.error('This user does not have a public key yet.');
@@ -124,8 +124,8 @@ App = {
             }
             const account = accounts[0]; // There is only one account if you are logged in using MetaMask.
 
-            App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
-                return medicalRecordSystemInstance.setPublicKey(keys['public'], {from: account});
+            App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
+                return recordSystem.setPublicKey(keys['public'], {from: account});
             }).then(function (result) {
                 App.showKeys(keys);
             }).catch(function (err) {
@@ -163,8 +163,8 @@ App = {
                 const fileHash = ipfsHash[0].hash;
 
 
-                App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
-                    return medicalRecordSystemInstance.upload(fileHash, {from: account});
+                App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
+                    return recordSystem.upload(fileHash, {from: account});
                 }).catch(function (err) {
                     console.error(err.message);
                 });
@@ -216,9 +216,9 @@ App = {
 
         const fileJson = JSON.parse(event.target.getAttribute('encryptedFile'));
 
-        App.contracts.MedicalRecordSystem.deployed().then(function (medicalRecordSystemInstance) {
+        App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
             const fileHash = event.target.getAttribute('fileHash');
-            const promises = [medicalRecordSystemInstance.getPublicKey.call(fileJson.owner), medicalRecordSystemInstance.getReKey.call(fileHash)];
+            const promises = [recordSystem.getPublicKey.call(fileJson.owner), recordSystem.getReKey.call(fileHash)];
             Promise.all(promises).then(function (keys) {
                 const data = {
                     file: fileJson.file,
@@ -293,13 +293,13 @@ App = {
             callbackData = {};
         }
 
-        App.contracts.MedicalRecordSystem.deployed().then(function (instance) {
+        App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
             let promise;
 
             if (patient === undefined) {
-                promise = instance.getNumberOfRecords.call();
+                promise = recordSystem.getNumberOfRecords.call();
             } else {
-                promise = instance.getNumberOfForeignRecords.call(patient);
+                promise = recordSystem.getNumberOfForeignRecords.call(patient);
             }
 
             promise.then(function (numberOfRecords) {
@@ -308,9 +308,9 @@ App = {
 
                 for (let i = 0; i < numberOfRecords; i++) {
                     if (patient === undefined) {
-                        promises.push(instance.getRecordByIndex.call(i));
+                        promises.push(recordSystem.getRecordByIndex.call(i));
                     } else {
-                        promises.push(instance.getForeignRecordByIndex.call(patient, i));
+                        promises.push(recordSystem.getForeignRecordByIndex(patient, i));
                     }
                 }
 

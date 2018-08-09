@@ -1,6 +1,12 @@
 pragma solidity ^0.4.22;
 
 contract MedicalRecordSystem {
+    struct access {
+        address medic;
+        string hashPointer;
+    }
+
+    access[] accessLog;
     mapping(address => string[]) public ownRecords;
     mapping(address => mapping(address => string[])) public foreignRecords;
     mapping(address => string) public publicKeys;
@@ -54,8 +60,9 @@ contract MedicalRecordSystem {
         return foreignRecords[medic][patient].length;
     }
 
-    function getForeignRecordByIndex(address patient, uint index) public view returns (string) {
+    function getForeignRecordByIndex(address patient, uint index) public returns (string) {
         address medic = msg.sender;
+        accessLog.push(access(medic, foreignRecords[medic][patient][index]));
         return foreignRecords[medic][patient][index];
     }
 
