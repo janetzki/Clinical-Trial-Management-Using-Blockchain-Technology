@@ -1,4 +1,5 @@
-# Clinical Trial Managment Using Blockchain Technology
+# Clinical Trial Management Using Blockchain Technology
+![](screenshots/patient.png)
 This platform simplifies the recruitment process of clinical trials by allowing faster communication between patients and representatives of pharmaceutical institutions. Patients can securely upload their medical records and grant access to medical professionals.
 
 
