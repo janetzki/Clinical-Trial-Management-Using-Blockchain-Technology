@@ -84,7 +84,7 @@ First, log in as a patient or medical professional by clicking the respective bu
 Note that the following steps require to interact with MetaMask.
 - Click "Generate keys" to generate a new key pair and store the secret key at a safe location. The public key is stored on the blockchain and will be loaded when you refresh the window. You need to re-enter the secret key manually.
 - Click "Browse" to select a medical record. Examples can be found in `examples/records/`. Click "Upload medical record" to upload it to the platform.
-- Click "Show records" to see a list of the hash pointers to your uploaded records. Open the link in a new window to see the encrypted content. Click "Decrypt" to see its original content.
+- Click "Show records" to see a list of the hash pointers to your uploaded records. Note that it might take some seconds for a new record to show up since a new block has to be mined. Click the link to see the encrypted content in a new tab. Click "Decrypt" to see its original content.
 - You can grant access to a medical professional, who already has a key pair. If not, first log in as a medical professional as described below. Then enter its blockchain address into the text field and click "Grant access". In MetaMask, you can choose the files for which you want to grant access.
 
 

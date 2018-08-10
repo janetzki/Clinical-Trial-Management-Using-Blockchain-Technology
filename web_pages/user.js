@@ -26,6 +26,8 @@ App = {
         web3.eth.getAccounts(function (error, accounts) {
             if (error) {
                 console.error(error);
+                App.showDefaultError();
+                return;
             }
             const account = accounts[0]; // There is only one account if you are logged in using MetaMask.
 
@@ -37,9 +39,10 @@ App = {
                     'public': publicKey
                 };
                 App.showKeys(keys);
-                App.handleUpdateForPatient();
+                App.handleUpdateForPatient(undefined, true);
             }).catch(function (err) {
                 console.error(err.message);
+                App.showDefaultError();
             });
         });
     },
@@ -66,9 +69,14 @@ App = {
 
         const fileUploader = $('#file-upload')[0];
         if (!fileUploader.files || !fileUploader.files[0]) {
-            alert('No file selected');
+            alert('Error: No file selected');
             return;
         }
+        if ($('#publicKey').val() === '') {
+            alert('Error: You need to generate or enter your public key first.');
+            return;
+        }
+
         const file = fileUploader.files[0];
         const reader = new FileReader();
 
@@ -79,13 +87,13 @@ App = {
         };
     },
 
-    handleUpdateForPatient: function (event) {
+    handleUpdateForPatient: function (event, initialization = false) {
         if (event !== undefined) {
             event.preventDefault();
         }
 
         const callbackData = App.clearRecordsList();
-        App.getFilesAsPatient(App.showFileLink, callbackData);
+        App.getFilesAsPatient(App.showFileLink, callbackData, initialization);
     },
 
     handleUpdateForMedic: function (event) {
@@ -107,6 +115,7 @@ App = {
                 console.error(textStatus);
                 console.error(jqXHR.responseJSON);
                 console.error(errorThrown);
+                App.showDefaultError();
             }
         });
     },
@@ -116,7 +125,10 @@ App = {
 
         const account = $('#recipient-address').val();
         if (account === '') {
-            alert('Enter a valid address');
+            alert('Error: Enter a valid blockchain address');
+            return;
+        }
+        if (!App.requireKeys()) {
             return;
         }
 
@@ -124,7 +136,7 @@ App = {
             return recordSystem.getPublicKey.call(account);
         }).then(function (publicKey) {
             if (publicKey === '') {
-                alert('This user does not have a public key yet.');
+                alert('Error: This user does not have a public key yet.');
                 return;
             }
 
@@ -135,11 +147,16 @@ App = {
             App.getFilesAsPatient(App.grantAccess, callbackData);
         }).catch(function (err) {
             console.error(err.message);
+            alert('Error: Enter a valid blockchain address');
         });
     },
-    
+
     handleDecrypt: function (event) {
         event.preventDefault();
+
+        if (!App.requireKeys()) {
+            return;
+        }
 
         const fileJson = JSON.parse(event.target.getAttribute('encryptedFile'));
 
@@ -168,14 +185,17 @@ App = {
                         $('#record').text(data['file']);
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
+                        $('#record').text('');
                         console.error(textStatus);
                         console.error(jqXHR.responseJSON);
                         console.error(errorThrown);
+                        alert('Error: Decryption failed. The specified keys do not match the keys used for (re-)encryption.')
                     }
                 });
             })
         }).catch(function (err) {
             console.error(err.message);
+            App.showDefaultError();
         });
     },
 
@@ -202,6 +222,7 @@ App = {
                 console.error(textStatus);
                 console.error(jqXHR.responseJSON);
                 console.error(errorThrown);
+                App.showDefaultError();
             }
         });
     },
@@ -215,6 +236,8 @@ App = {
         web3.eth.getAccounts(function (error, accounts) {
             if (error) {
                 console.error(error);
+                App.showDefaultError();
+                return;
             }
             const account = accounts[0]; // There is only one account if you are logged in using MetaMask.
 
@@ -224,6 +247,7 @@ App = {
                 App.showKeys(keys);
             }).catch(function (err) {
                 console.error(err.message);
+                App.showDefaultError();
             });
         });
     },
@@ -232,6 +256,8 @@ App = {
         web3.eth.getAccounts(function (error, accounts) {
             if (error) {
                 console.error(error);
+                App.showDefaultError();
+                return;
             }
 
             const account = accounts[0]; // There is only one account if you are logged in using MetaMask.
@@ -245,6 +271,7 @@ App = {
                     return recordSystem.upload(fileHash, {from: account});
                 }).catch(function (err) {
                     console.error(err.message);
+                    App.showDefaultError();
                 });
             });
         });
@@ -267,6 +294,7 @@ App = {
                 console.error(textStatus);
                 console.error(jqXHR.responseJSON);
                 console.error(errorThrown);
+                App.showDefaultError();
             }
         });
     },
@@ -283,6 +311,7 @@ App = {
         link.appendChild(document.createTextNode(fileName));
         link.title = fileName;
         link.href = callbackData.url;
+        link.target = '_blank';
 
         const button = document.createElement('button');
         const idClass = 'btn-decrypt' + fileName;
@@ -313,7 +342,7 @@ App = {
         xmlHttp.send(null);
     },
 
-    getFilesAsPatient: function (callback, callbackData) {
+    getFilesAsPatient: function (callback, callbackData, initialization = false) {
         if (callbackData === undefined) {
             callbackData = {};
         }
@@ -321,6 +350,12 @@ App = {
         App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
             recordSystem.getNumberOfRecords.call().then(function (numberOfRecords) {
                 numberOfRecords = numberOfRecords.toNumber();
+
+                if (numberOfRecords === 0 && !initialization) {
+                    alert('Info: There are no records. It might take some seconds for a new record to be accessible (due to mining).');
+                    return;
+                }
+
                 const promises = [];
 
                 for (let i = 0; i < numberOfRecords; i++) {
@@ -335,6 +370,7 @@ App = {
             })
         }).catch(function (err) {
             console.error(err.message);
+            App.showDefaultError();
         });
     },
 
@@ -343,29 +379,41 @@ App = {
             callbackData = {};
         }
 
+        if (patient === '') {
+            alert('Error: Enter a valid blockchain address');
+            return;
+        }
+
         App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
             recordSystem.getNumberOfForeignRecords.call(patient).then(function (numberOfRecords) {
                 const readRecordEvent = recordSystem.ReadRecord();
 
-                const list = document.getElementById('records');
-                list.innerHTML = '';
-                callbackData.list = list;
-
                 readRecordEvent.watch(function (error, result) {
                     if (error) {
                         console.error(error);
+                        App.showDefaultError();
+                        return;
                     }
 
                     App.getFile(result.args.hashPointer, callback, callbackData);
                 });
 
                 numberOfRecords = numberOfRecords.toNumber();
+                if (numberOfRecords === 0) {
+                    alert('Info: The patient has not granted you access to their records.');
+                    return;
+                }
+
                 for (let i = 0; i < numberOfRecords; i++) {
                     recordSystem.getForeignRecordByIndex(patient, i);
                 }
-            })
+            }).catch(function (err) {
+                console.error(err.message);
+                alert('Error: Enter a valid blockchain address');
+            });
         }).catch(function (err) {
             console.error(err.message);
+            App.showDefaultError();
         });
     },
 
@@ -374,6 +422,18 @@ App = {
         list.innerHTML = '';+
         App.visibleRecords.clear();
         return {list: list};
+    },
+
+    requireKeys: function () {
+        const keysSet = $('#privateKey').val() !== '' && $('#publicKey').val() !== '';
+        if (!keysSet) {
+            alert('Error: You need to enter both of your keys first.');
+        }
+        return keysSet;
+    },
+
+    showDefaultError: function () {
+        alert('An unknown error occurred. Additional output can be found in the browser console. Make sure to follow the steps in the README.md.')
     },
 };
 
