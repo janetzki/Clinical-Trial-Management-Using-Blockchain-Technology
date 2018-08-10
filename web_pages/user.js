@@ -58,7 +58,125 @@ App = {
         $(document).on('click', '.btn-update', App.handleUpdateForPatient);
         $(document).on('click', '.btn-update-medic', App.handleUpdateForMedic);
         $(document).on('click', '.btn-generate-keys', App.handleGenerateKeys);
-        $(document).on('click', '.btn-grant-access', App.handleGrantAccessForAllFiles);
+        $(document).on('click', '.btn-grant-access', App.handleGrantAccessToAllFiles);
+    },
+
+    handleUpload: function (event) {
+        event.preventDefault();
+
+        const fileUploader = $('#file-upload')[0];
+        if (!fileUploader.files || !fileUploader.files[0]) {
+            alert('No file selected');
+            return;
+        }
+        const file = fileUploader.files[0];
+        const reader = new FileReader();
+
+        reader.readAsText(file);
+        reader.onload = function (reader) {
+            const file = reader.target.result;
+            App.encryptFile(file);
+        };
+    },
+
+    handleUpdateForPatient: function (event) {
+        if (event !== undefined) {
+            event.preventDefault();
+        }
+
+        const callbackData = App.clearRecordsList();
+        App.getFilesAsPatient(App.showFileLink, callbackData);
+    },
+
+    handleUpdateForMedic: function (event) {
+        event.preventDefault();
+
+        const patientAccount = $('#patient-address').val();
+        const callbackData = App.clearRecordsList();
+        App.getFilesAsMedic(App.showFileLink, callbackData, patientAccount);
+    },
+
+    handleGenerateKeys: function () {
+        $.ajax({
+            type: 'GET',
+            url: 'http://localhost:8000/generate_key_pair',
+            success: function (data, textStatus, jqXHR1) {
+                App.setKeys(data);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.error(textStatus);
+                console.error(jqXHR.responseJSON);
+                console.error(errorThrown);
+            }
+        });
+    },
+
+    handleGrantAccessToAllFiles: function (event) {
+        event.preventDefault();
+
+        const account = $('#recipient-address').val();
+        if (account === '') {
+            alert('Enter a valid address');
+            return;
+        }
+
+        App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
+            return recordSystem.getPublicKey.call(account);
+        }).then(function (publicKey) {
+            if (publicKey === '') {
+                alert('This user does not have a public key yet.');
+                return;
+            }
+
+            const callbackData = {
+                publicKey: publicKey,
+                account: account
+            };
+            App.getFilesAsPatient(App.grantAccess, callbackData);
+        }).catch(function (err) {
+            console.error(err.message);
+        });
+    },
+    
+    handleDecrypt: function (event) {
+        event.preventDefault();
+
+        const fileJson = JSON.parse(event.target.getAttribute('encryptedFile'));
+
+        App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
+            const fileHash = event.target.getAttribute('fileHash');
+            const promises = [recordSystem.getPublicKey.call(fileJson.owner), recordSystem.getReKey.call(fileHash)];
+            Promise.all(promises).then(function (keys) {
+                const data = {
+                    file: fileJson.file,
+                    capsule: fileJson.capsule,
+                    private_key: $('#privateKey').val(),
+                    public_key: $('#publicKey').val()
+                };
+
+                if (keys[1] !== '') {
+                    // medical professional
+                    data.re_key = keys[1];
+                    data.owner_public_key = keys[0];
+                }
+                $.ajax({
+                    type: 'POST',
+                    dataType: 'json',
+                    url: 'http://localhost:8000/decrypt',
+                    data: data,
+                    success: function (data, textStatus, jqXHR1) {
+                        $('#record').text(data['file']);
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.error(textStatus);
+                        console.error(jqXHR.responseJSON);
+                        console.error(errorThrown);
+                    }
+                });
+            })
+        }).catch(function (err) {
+            console.error(err.message);
+        });
     },
 
     grantAccess: function (encryptedFile, callbackData) {
@@ -88,33 +206,6 @@ App = {
         });
     },
 
-    handleGrantAccessForAllFiles: function (event) {
-        event.preventDefault();
-
-        const account = $('#recipient-address').val();
-        if (account === '') {
-            alert('Enter a valid address');
-            return;
-        }
-
-        App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
-            return recordSystem.getPublicKey.call(account);
-        }).then(function (publicKey) {
-            if (publicKey === '') {
-                alert('This user does not have a public key yet.');
-                return;
-            }
-
-            const callbackData = {
-                publicKey: publicKey,
-                account: account
-            };
-            App.getFilesAsPatient(App.grantAccess, callbackData);
-        }).catch(function (err) {
-            console.error(err.message);
-        });
-    },
-
     showKeys: function (keys) {
         $('#privateKey').val(keys['private']);
         $('#publicKey').val(keys['public']);
@@ -134,21 +225,6 @@ App = {
             }).catch(function (err) {
                 console.error(err.message);
             });
-        });
-    },
-
-    handleGenerateKeys: function () {
-        $.ajax({
-            type: 'GET',
-            url: 'http://localhost:8000/generate_key_pair',
-            success: function (data, textStatus, jqXHR1) {
-                App.setKeys(data);
-            },
-            error: function (jqXHR, textStatus, errorThrown) {
-                console.error(textStatus);
-                console.error(jqXHR.responseJSON);
-                console.error(errorThrown);
-            }
         });
     },
 
@@ -195,65 +271,6 @@ App = {
         });
     },
 
-    handleUpload: function (event) {
-        event.preventDefault();
-
-        const fileUploader = $('#file-upload')[0];
-        if (!fileUploader.files || !fileUploader.files[0]) {
-            alert('No file selected');
-            return;
-        }
-        const file = fileUploader.files[0];
-        const reader = new FileReader();
-
-        reader.readAsText(file);
-        reader.onload = function (reader) {
-            const file = reader.target.result;
-            App.encryptFile(file);
-        };
-    },
-
-    decrypt: function (event) {
-        event.preventDefault();
-
-        const fileJson = JSON.parse(event.target.getAttribute('encryptedFile'));
-
-        App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
-            const fileHash = event.target.getAttribute('fileHash');
-            const promises = [recordSystem.getPublicKey.call(fileJson.owner), recordSystem.getReKey.call(fileHash)];
-            Promise.all(promises).then(function (keys) {
-                const data = {
-                    file: fileJson.file,
-                    capsule: fileJson.capsule,
-                    private_key: $('#privateKey').val(),
-                    public_key: $('#publicKey').val()
-                };
-
-                if (keys[1] !== '') {
-                    // medical professional
-                    data.re_key = keys[1];
-                    data.owner_public_key = keys[0];
-                }
-                $.ajax({
-                    type: 'POST',
-                    dataType: 'json',
-                    url: 'http://localhost:8000/decrypt',
-                    data: data,
-                    success: function (data, textStatus, jqXHR1) {
-                        $('#record').text(data['file']);
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        console.error(textStatus);
-                        console.error(jqXHR.responseJSON);
-                        console.error(errorThrown);
-                    }
-                });
-            })
-        }).catch(function (err) {
-            console.error(err.message);
-        });
-    },
-
     showFileLink: function (encryptedFile, callbackData) {
         if (App.visibleRecords.has(callbackData.hash)) {
             // prevent duplicates
@@ -274,7 +291,7 @@ App = {
         button.type = 'button';
         button.setAttribute('encryptedFile', encryptedFile);
         button.setAttribute('fileHash', callbackData.hash);
-        $(document).on('click', '.' + idClass, App.decrypt);
+        $(document).on('click', '.' + idClass, App.handleDecrypt);
 
         const listItem = document.createElement('li');
         listItem.appendChild(button);
@@ -357,23 +374,6 @@ App = {
         list.innerHTML = '';+
         App.visibleRecords.clear();
         return {list: list};
-    },
-
-    handleUpdateForPatient: function (event) {
-        if (event !== undefined) {
-            event.preventDefault();
-        }
-
-        const callbackData = App.clearRecordsList();
-        App.getFilesAsPatient(App.showFileLink, callbackData);
-    },
-
-    handleUpdateForMedic: function (event) {
-        event.preventDefault();
-
-        const patientAccount = $('#patient-address').val();
-        const callbackData = App.clearRecordsList();
-        App.getFilesAsMedic(App.showFileLink, callbackData, patientAccount);
     },
 };
 
