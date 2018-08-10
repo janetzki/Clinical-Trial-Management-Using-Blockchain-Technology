@@ -6,11 +6,18 @@ contract MedicalRecordSystem {
         string hashPointer;
     }
 
+
     access[] accessLog;
     mapping(address => string[]) public ownRecords;
     mapping(address => mapping(address => string[])) public foreignRecords;
     mapping(address => string) public publicKeys;
     mapping(address => mapping(bytes32 => string)) public reKeys;
+
+
+    // Triggered when a foreign medical record is read
+    event ReadRecord (
+        string hashPointer
+    );
 
 
     function upload(string hashPointer) public returns (bool) {
@@ -60,10 +67,11 @@ contract MedicalRecordSystem {
         return foreignRecords[medic][patient].length;
     }
 
-    function getForeignRecordByIndex(address patient, uint index) public returns (string) {
+    function getForeignRecordByIndex(address patient, uint index) public returns (bool) {
         address medic = msg.sender;
         accessLog.push(access(medic, foreignRecords[medic][patient][index]));
-        return foreignRecords[medic][patient][index];
+        emit ReadRecord(foreignRecords[medic][patient][index]);
+        return true;
     }
 
 

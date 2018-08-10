@@ -5,6 +5,8 @@ const ipfs = new IpfsApi('localhost', '5001', {protocol: 'http'});
 App = {
     web3Provider: null,
     contracts: {},
+    visibleRecords: new Set(),
+
 
     init: function () {
         App.initWeb3();
@@ -22,7 +24,7 @@ App = {
         return App.initContract();
     },
 
-    initPublicKey: function() {
+    initPublicKey: function () {
         web3.eth.getAccounts(function (error, accounts) {
             if (error) {
                 console.error(error);
@@ -254,6 +256,12 @@ App = {
     },
 
     showFileLink: function (encryptedFile, callbackData) {
+        if (App.visibleRecords.has(callbackData.hash)) {
+            // prevent duplicates
+            return;
+        }
+        App.visibleRecords.add(callbackData.hash);
+
         const fileName = 'Record_' + callbackData.hash;
         const link = document.createElement('a');
         link.appendChild(document.createTextNode(fileName));
@@ -289,30 +297,18 @@ App = {
         xmlHttp.send(null);
     },
 
-    getFiles: function (callback, callbackData, patient) {
+    getFiles: function (callback, callbackData) {
         if (callbackData === undefined) {
             callbackData = {};
         }
 
         App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
-            let promise;
-
-            if (patient === undefined) {
-                promise = recordSystem.getNumberOfRecords.call();
-            } else {
-                promise = recordSystem.getNumberOfForeignRecords.call(patient);
-            }
-
-            promise.then(function (numberOfRecords) {
+            recordSystem.getNumberOfRecords.call().then(function (numberOfRecords) {
                 numberOfRecords = numberOfRecords.toNumber();
                 const promises = [];
 
                 for (let i = 0; i < numberOfRecords; i++) {
-                    if (patient === undefined) {
-                        promises.push(recordSystem.getRecordByIndex.call(i));
-                    } else {
-                        promises.push(recordSystem.getForeignRecordByIndex.call(patient, i));
-                    }
+                    promises.push(recordSystem.getRecordByIndex.call(i));
                 }
 
                 Promise.all(promises).then(function (hashes) {
@@ -329,6 +325,43 @@ App = {
         });
     },
 
+    getFilesAsMedic: function (callback, callbackData, patient) {
+        if (callbackData === undefined) {
+            callbackData = {};
+        }
+
+        App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
+            recordSystem.getNumberOfForeignRecords.call(patient).then(function (numberOfRecords) {
+                const readRecordEvent = recordSystem.ReadRecord();
+                console.log(patient);
+                console.log('watch');
+
+                const list = document.getElementById('records');
+                list.innerHTML = '';
+                App.visibleRecords.clear();
+                callbackData.list = list;
+
+                readRecordEvent.watch(function (error, result) {
+                    console.log('event!');
+                    if (error) {
+                        console.error(error);
+                    }
+
+                    App.getFile(result.args.hashPointer, callback, callbackData);
+                });
+
+                numberOfRecords = numberOfRecords.toNumber();
+                console.log(numberOfRecords);
+                for (let i = 0; i < numberOfRecords; i++) {
+                    console.log('file');
+                    recordSystem.getForeignRecordByIndex(patient, i);
+                }
+            })
+        }).catch(function (err) {
+            console.error(err.message);
+        });
+    },
+
     handleUpdateForPatient: function (event) {
         event.preventDefault();
 
@@ -339,7 +372,7 @@ App = {
         event.preventDefault();
 
         const patientAccount = $('#patient-address').val();
-        App.getFiles(App.showFileLink, undefined, patientAccount);
+        App.getFilesAsMedic(App.showFileLink, undefined, patientAccount);
     },
 };
 
