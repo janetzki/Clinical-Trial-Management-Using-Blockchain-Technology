@@ -36,8 +36,8 @@ contract MedicalRecordSystem {
         return true;
     }
 
-    function getPublicKey(address person) public view returns (string) {
-        return publicKeys[person];
+    function getPublicKey(address user) public view returns (string) {
+        return publicKeys[user];
     }
 
 

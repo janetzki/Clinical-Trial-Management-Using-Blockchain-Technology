@@ -162,7 +162,6 @@ App = {
             ipfs.add(buffer, (err, ipfsHash) => {
                 const fileHash = ipfsHash[0].hash;
 
-
                 App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
                     return recordSystem.upload(fileHash, {from: account});
                 }).catch(function (err) {
@@ -262,7 +261,7 @@ App = {
         const button = document.createElement('button');
         const idClass = 'btn-decrypt' + fileName;
         button.textContent = 'Decrypt';
-        button.classList = 'btn btn-default decrypt-button btn-decrypt ' + idClass;
+        button.classList = 'btn btn-secondary decrypt-button btn-decrypt ' + idClass;
         button.type = 'button';
         button.setAttribute('encryptedFile', encryptedFile);
         button.setAttribute('fileHash', callbackData.hash);
@@ -310,7 +309,7 @@ App = {
                     if (patient === undefined) {
                         promises.push(recordSystem.getRecordByIndex.call(i));
                     } else {
-                        promises.push(recordSystem.getForeignRecordByIndex(patient, i));
+                        promises.push(recordSystem.getForeignRecordByIndex.call(patient, i));
                     }
                 }
 
@@ -330,11 +329,13 @@ App = {
 
     handleUpdateForPatient: function (event) {
         event.preventDefault();
+
         App.getFiles(App.showFileLink);
     },
 
     handleUpdateForMedic: function (event) {
         event.preventDefault();
+
         const patientAccount = $('#patient-address').val();
         App.getFiles(App.showFileLink, undefined, patientAccount);
     },

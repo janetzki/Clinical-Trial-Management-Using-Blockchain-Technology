@@ -2,6 +2,31 @@ html, body {
     height: 100%;
 }
 
+pre {
+    padding: 0 15px 0 15px;
+}
+
+.background {
+    background: linear-gradient(to bottom, #eeeeee 0%, #aaaaaa 100%);
+    height: 100%;
+}
+
+.content {
+    height: 100%;
+    padding: 15px;
+}
+
+.content-box {
+    background-color: #fafcfc;
+    border: 1px solid lightgray;
+    border-top: 0;
+}
+
 .decrypt-button {
     margin: 10px;
+}
+
+.row {
+    padding: 1em 0 1em 0;
+    border-top: 1px solid lightgrey;
 }

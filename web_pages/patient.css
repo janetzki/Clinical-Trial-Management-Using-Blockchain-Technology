@@ -1,3 +1,4 @@
-body {
+.background {
     background: linear-gradient(to bottom, #eeeeff 0%, #aaaaff 100%);
+    height: 100%;
 }
