@@ -35,7 +35,7 @@ cd truffle
 sudo truffle compile
 sudo truffle migrate
 ```
-(Troubleshooting: If the migration step fails delete the `build/` directory and try again.)
+(Troubleshooting: If the migration step fails, delete the `build/` directory and try again.)
 
 
 Start the IPFS daemon:
@@ -67,7 +67,7 @@ Use MetaMask to connect to the Ganache blockchain. Do not forget to reset your a
 
 <br></br>
 ## Usage
-First, login as a patient or medical professional by clicking the respective button. You should see a new web page.
+First, log in as a patient or medical professional by clicking the respective button. You should see a new web page.
 
 
 ### As a Patient
@@ -75,14 +75,14 @@ Note that the following steps require to interact with MetaMask.
 - Click "Generate keys" to generate a new key pair and store the secret key at a safe location. The public key is stored on the blockchain and will be loaded when you refresh the window. You need to re-enter the secret key manually.
 - Click "Browse" to select a medical record. Examples can be found in `examples/medical records/`. Click "Upload medical record" to upload it to the platform.
 - Click "Show records" to see a list of the hash pointers to your uploaded records. Open the link in a new window to see the encrypted content. Click "Decrypt" to see its original content.
-- You can grant access to a medical professional, who already has a key pair. If not, first login as a medical professional as described below. Then enter its blockchain address into the text field and click "Grant access". In MetaMask, you can choose for which files you want to grant access rights.
+- You can grant access to a medical professional, who already has a key pair. If not, first log in as a medical professional as described below. Then enter its blockchain address into the text field and click "Grant access". In MetaMask, you can choose the files for which you want to grant access.
 
 
 ### As a Medical Professional
-Note that you need to switch your blockchain account in MetaMask to login as another user. This works best with two different browsers.
+Note that you need to switch your blockchain account in MetaMask to log in as another user. This works best with two different browsers.
 - Like for the patient, generate a key pair and store the secret key at a safe location.
 - Enter the blockchain address of a patient that granted access to their medical records.
-- Click "Show records" to see a full list of all medical records for this patient you have access to. You can use "Decrypt" and the link in the same way as the owner of the record.
+- Click "Show records" to see a full list of all accessible medical records for this patient. You can use "Decrypt" and the link in the same way as the owner of the record.
 
 
 <br></br>
@@ -90,4 +90,12 @@ Note that you need to switch your blockchain account in MetaMask to login as ano
 ```
 cd truffle
 truffle test
+```
+
+
+<br></br>
+## Note for Developers
+If you make changes to `web_pages/user.js`, apply the tool [browserify](http://browserify.org/) to make it usable by browsers:
+```
+browserify web_pages/user.js > web_pages/user-browser.js
 ```
