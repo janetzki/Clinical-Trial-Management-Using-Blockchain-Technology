@@ -10,7 +10,7 @@ App = {
 
     init: function () {
         App.initWeb3();
-        App.initPublicKey();
+        App.initUi();
     },
 
     initWeb3: function () {
@@ -24,7 +24,7 @@ App = {
         return App.initContract();
     },
 
-    initPublicKey: function () {
+    initUi: function () {
         web3.eth.getAccounts(function (error, accounts) {
             if (error) {
                 console.error(error);
@@ -39,6 +39,7 @@ App = {
                     'public': publicKey
                 };
                 App.showKeys(keys);
+                App.handleUpdateForPatient();
             }).catch(function (err) {
                 console.error(err.message);
             });
@@ -58,8 +59,8 @@ App = {
         $(document).on('click', '.btn-upload', App.handleUpload);
         $(document).on('click', '.btn-update', App.handleUpdateForPatient);
         $(document).on('click', '.btn-update-medic', App.handleUpdateForMedic);
-        $(document).on('click', '.btn-generate-keys', App.generateKeys);
-        $(document).on('click', '.btn-grant-access', App.grantAccessForAllFiles);
+        $(document).on('click', '.btn-generate-keys', App.handleGenerateKeys);
+        $(document).on('click', '.btn-grant-access', App.handleGrantAccessForAllFiles);
     },
 
     grantAccess: function (encryptedFile, callbackData) {
@@ -89,12 +90,12 @@ App = {
         });
     },
 
-    grantAccessForAllFiles: function (event) {
+    handleGrantAccessForAllFiles: function (event) {
         event.preventDefault();
 
         const account = $('#recipient-address').val();
         if (account === '') {
-            console.error('Enter a valid address');
+            alert('Enter a valid address');
             return;
         }
 
@@ -102,7 +103,7 @@ App = {
             return recordSystem.getPublicKey.call(account);
         }).then(function (publicKey) {
             if (publicKey === '') {
-                console.error('This user does not have a public key yet.');
+                alert('This user does not have a public key yet.');
                 return;
             }
 
@@ -110,7 +111,7 @@ App = {
                 publicKey: publicKey,
                 account: account
             };
-            App.getFiles(App.grantAccess, callbackData);
+            App.getFilesAsPatient(App.grantAccess, callbackData);
         }).catch(function (err) {
             console.error(err.message);
         });
@@ -138,7 +139,7 @@ App = {
         });
     },
 
-    generateKeys: function () {
+    handleGenerateKeys: function () {
         $.ajax({
             type: 'GET',
             url: 'http://localhost:8000/generate_key_pair',
@@ -201,7 +202,7 @@ App = {
 
         const fileUploader = $('#file-upload')[0];
         if (!fileUploader.files || !fileUploader.files[0]) {
-            console.error('No file selected');
+            alert('No file selected');
             return;
         }
         const file = fileUploader.files[0];
@@ -297,7 +298,7 @@ App = {
         xmlHttp.send(null);
     },
 
-    getFiles: function (callback, callbackData) {
+    getFilesAsPatient: function (callback, callbackData) {
         if (callbackData === undefined) {
             callbackData = {};
         }
@@ -312,9 +313,6 @@ App = {
                 }
 
                 Promise.all(promises).then(function (hashes) {
-                    const list = document.getElementById('records');
-                    list.innerHTML = '';
-                    callbackData.list = list;
                     for (const i in hashes) {
                         App.getFile(hashes[i], callback, callbackData);
                     }
@@ -333,16 +331,12 @@ App = {
         App.contracts.MedicalRecordSystem.deployed().then(function (recordSystem) {
             recordSystem.getNumberOfForeignRecords.call(patient).then(function (numberOfRecords) {
                 const readRecordEvent = recordSystem.ReadRecord();
-                console.log(patient);
-                console.log('watch');
 
                 const list = document.getElementById('records');
                 list.innerHTML = '';
-                App.visibleRecords.clear();
                 callbackData.list = list;
 
                 readRecordEvent.watch(function (error, result) {
-                    console.log('event!');
                     if (error) {
                         console.error(error);
                     }
@@ -351,9 +345,7 @@ App = {
                 });
 
                 numberOfRecords = numberOfRecords.toNumber();
-                console.log(numberOfRecords);
                 for (let i = 0; i < numberOfRecords; i++) {
-                    console.log('file');
                     recordSystem.getForeignRecordByIndex(patient, i);
                 }
             })
@@ -362,17 +354,28 @@ App = {
         });
     },
 
-    handleUpdateForPatient: function (event) {
-        event.preventDefault();
+    clearRecordsList: function () {
+        const list = document.getElementById('records');
+        list.innerHTML = '';+
+        App.visibleRecords.clear();
+        return {list: list};
+    },
 
-        App.getFiles(App.showFileLink);
+    handleUpdateForPatient: function (event) {
+        if (event !== undefined) {
+            event.preventDefault();
+        }
+
+        const callbackData = App.clearRecordsList();
+        App.getFilesAsPatient(App.showFileLink, callbackData);
     },
 
     handleUpdateForMedic: function (event) {
         event.preventDefault();
 
         const patientAccount = $('#patient-address').val();
-        App.getFilesAsMedic(App.showFileLink, undefined, patientAccount);
+        const callbackData = App.clearRecordsList();
+        App.getFilesAsMedic(App.showFileLink, callbackData, patientAccount);
     },
 };
 
