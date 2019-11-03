@@ -1,6 +1,8 @@
 # Clinical Trial Management Using Blockchain Technology
 ![](screenshots/patient.png)
-This platform simplifies the recruitment process of clinical trials by allowing faster communication between patients and representatives of pharmaceutical institutions. Patients can securely upload their medical records and grant access to medical professionals.
+
+## Motivation
+Clinical trials currently build on an inefficient recruitment process due to slow communication between the patients and medical professionals. A solution for this problem is to share electronic medical records (EMRs) via an online platform, but standard approaches cannot ensure the immutability of the medical history. This web application is a peer-to-peer platform that does not rely on trust. Using blockchain technology, all EMRs are stored tamper-proof by logging uploads inside a smart contract. On top of that, it employs proxy re-encryption to allow access control.
 
 
 <br></br>
