@@ -18,7 +18,7 @@
     "express": "^4.16.3",
     "fs-extra": "^6.0.1",
     "ipfs-api": "^22.1.0",
-    "jquery": "^3.3.1",
+    "jquery": "^3.5.0",
     "truffle-contract": "^3.0.5"
   }
 }
