@@ -12,7 +12,7 @@
   },
   "author": "Jonathan Janetzki",
   "dependencies": {
-    "bootstrap": "^4.1.2",
+    "bootstrap": "^4.3.1",
     "buffer": "^5.1.0",
     "cryptojs": "^2.5.3",
     "express": "^4.16.3",
